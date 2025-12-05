@@ -47,12 +47,12 @@ class FinanzasMetrics:
             fecha__gte=fecha_inicio_dt,
             fecha__lt=fecha_fin_dt
         ).aggregate(
-            total_ventas=Coalesce(Sum('total_con_iva'), Decimal('0')),
+            total_ventas=Coalesce(Sum('total'), Decimal('0')),
             cantidad_transacciones=Count('id'),
-            ticket_promedio=Coalesce(Avg('total_con_iva'), Decimal('0')),
-            total_sin_iva=Coalesce(Sum('total_sin_iva'), Decimal('0')),
-            total_iva=Coalesce(Sum('total_iva'), Decimal('0')),
-            total_descuentos=Coalesce(Sum('descuento'), Decimal('0'))
+            ticket_promedio=Coalesce(Avg('total'), Decimal('0')),
+            total_sin_iva=Coalesce(Sum('neto'), Decimal('0')),
+            total_iva=Coalesce(Sum('iva'), Decimal('0')),
+            total_descuentos=Coalesce(Sum('detalles__descuento'), Decimal('0'))
         )
 
         return {
@@ -84,7 +84,7 @@ class FinanzasMetrics:
         ).extra(
             select={'dia': 'DATE(fecha)'}
         ).values('dia').annotate(
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         ).order_by('dia')
 
@@ -110,7 +110,7 @@ class FinanzasMetrics:
         ).extra(
             select={'hora': 'HOUR(fecha)'}
         ).values('hora').annotate(
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         ).order_by('hora')
 
@@ -196,16 +196,15 @@ class FinanzasMetrics:
             fecha__gte=fecha_inicio_dt,
             fecha__lt=fecha_fin_dt
         ).values('canal_venta').annotate(
-            total=Sum('total_con_iva'),
-            cantidad=Count('id'),
-            ticket_promedio=Avg('total_con_iva')
+            total=Sum('total'),
+            cantidad=Count('id')
         )
 
         return [{
             'canal': c['canal_venta'],
             'total': float(c['total']),
             'cantidad': c['cantidad'],
-            'ticket_promedio': float(c['ticket_promedio'])
+            'ticket_promedio': float(c['total']) / c['cantidad'] if c['cantidad'] > 0 else 0
         } for c in canales]
 
     @staticmethod
@@ -223,7 +222,7 @@ class FinanzasMetrics:
         ).extra(
             select={'mes': "DATE_FORMAT(fecha, '%%Y-%%m-01')"}
         ).values('mes').annotate(
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         ).order_by('mes')
 
@@ -250,9 +249,8 @@ class FinanzasMetrics:
             'cliente__nombre',
             'cliente__rut'
         ).annotate(
-            total_compras=Sum('total_con_iva'),
-            num_compras=Count('id'),
-            ticket_promedio=Avg('total_con_iva')
+            total_compras=Sum('total'),
+            num_compras=Count('id')
         ).order_by('-total_compras')[:limite]
 
         return [{
@@ -261,7 +259,7 @@ class FinanzasMetrics:
             'rut': c['cliente__rut'],
             'total_compras': float(c['total_compras']),
             'num_compras': c['num_compras'],
-            'ticket_promedio': float(c['ticket_promedio'])
+            'ticket_promedio': float(c['total_compras']) / c['num_compras'] if c['num_compras'] > 0 else 0
         } for c in clientes]
 
     @staticmethod
@@ -281,7 +279,7 @@ class FinanzasMetrics:
             fecha__gte=hoy_inicio,
             fecha__lt=hoy_fin
         ).aggregate(
-            total=Coalesce(Sum('total_con_iva'), Decimal('0')),
+            total=Coalesce(Sum('total'), Decimal('0')),
             cantidad=Count('id')
         )
 
@@ -290,7 +288,7 @@ class FinanzasMetrics:
             fecha__gte=ayer_inicio,
             fecha__lt=ayer_fin
         ).aggregate(
-            total=Coalesce(Sum('total_con_iva'), Decimal('0')),
+            total=Coalesce(Sum('total'), Decimal('0')),
             cantidad=Count('id')
         )
 
@@ -322,10 +320,10 @@ class FinanzasMetrics:
         resultado = Venta.objects.filter(
             fecha__gte=fecha_inicio_dt, fecha__lt=fecha_fin_dt
         ).aggregate(
-            total_bruto=Coalesce(Sum(F('total_sin_iva') + F('descuento')), Decimal('0')),
-            total_neto=Coalesce(Sum('total_sin_iva'), Decimal('0')),
-            total_descuentos=Coalesce(Sum('descuento'), Decimal('0')),
-            total_iva=Coalesce(Sum('total_iva'), Decimal('0')),
+            total_bruto=Coalesce(Sum(F('neto') + F('detalles__descuento')), Decimal('0')),
+            total_neto=Coalesce(Sum('neto'), Decimal('0')),
+            total_descuentos=Coalesce(Sum('detalles__descuento'), Decimal('0')),
+            total_iva=Coalesce(Sum('iva'), Decimal('0')),
             cantidad_ventas=Count('id')
         )
 
@@ -362,7 +360,7 @@ class FinanzasMetrics:
         por_canal = Venta.objects.filter(
             fecha__gte=fecha_inicio_dt, fecha__lt=fecha_fin_dt
         ).values('canal_venta').annotate(
-            ticket_promedio=Avg('total_con_iva'),
+            ticket_promedio=Avg('total'),
             cantidad=Count('id')
         )
 
@@ -372,8 +370,7 @@ class FinanzasMetrics:
         ).extra(
             select={'dia_semana': 'DAYOFWEEK(fecha)'}
         ).values('dia_semana').annotate(
-            ticket_promedio=Avg('total_con_iva'),
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         ).order_by('dia_semana')
 
@@ -394,7 +391,7 @@ class FinanzasMetrics:
             'por_dia_semana': [{
                 'dia': dias_semana_nombres.get(int(d['dia_semana']), 'Desconocido'),
                 'dia_numero': int(d['dia_semana']),
-                'ticket_promedio': float(d['ticket_promedio']),
+                'ticket_promedio': float(d['total']) / d['cantidad'] if d['cantidad'] > 0 else 0,
                 'total': float(d['total']),
                 'cantidad': d['cantidad']
             } for d in por_dia_semana_list]
@@ -413,7 +410,7 @@ class FinanzasMetrics:
         ).extra(
             select={'dia_semana': 'DAYOFWEEK(fecha)'}
         ).values('dia_semana').annotate(
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         ).order_by('dia_semana')
 
@@ -453,7 +450,7 @@ class FinanzasMetrics:
         # Agrupar por cliente
         clientes_stats = ventas_periodo.values('cliente').annotate(
             num_compras=Count('id'),
-            total_gastado=Sum('total_con_iva'),
+            total_gastado=Sum('total'),
             primera_compra=Min('fecha')
         )
 
@@ -501,7 +498,7 @@ class FinanzasMetrics:
                 'dia_semana': 'DAYOFWEEK(fecha)'
             }
         ).values('hora', 'dia_semana').annotate(
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         )
 
@@ -551,7 +548,7 @@ class FinanzasMetrics:
         promedio_diario = Venta.objects.filter(
             fecha__gte=fecha_inicio_dt, fecha__lt=fecha_fin_dt
         ).aggregate(
-            total=Coalesce(Sum('total_con_iva'), Decimal('0'))
+            total=Coalesce(Sum('total'), Decimal('0'))
         )
 
         promedio = float(promedio_diario['total']) / 30
@@ -586,7 +583,7 @@ class FinanzasMetrics:
         ).extra(
             select={'mes': "DATE_FORMAT(fecha, '%%Y-%%m-01')"}
         ).values('mes').annotate(
-            total=Sum('total_con_iva'),
+            total=Sum('total'),
             cantidad=Count('id')
         ).order_by('mes')
 
@@ -634,11 +631,11 @@ class FinanzasMetrics:
 
         ventas_actuales = Venta.objects.filter(
             fecha__gte=fecha_inicio_dt, fecha__lt=fecha_fin_dt
-        ).aggregate(total=Coalesce(Sum('total_con_iva'), Decimal('0')))
+        ).aggregate(total=Coalesce(Sum('total'), Decimal('0')))
 
         ventas_anteriores = Venta.objects.filter(
             fecha__gte=semana_anterior_inicio_dt, fecha__lt=semana_anterior_fin_dt
-        ).aggregate(total=Coalesce(Sum('total_con_iva'), Decimal('0')))
+        ).aggregate(total=Coalesce(Sum('total'), Decimal('0')))
 
         if ventas_anteriores['total'] > 0:
             variacion = ((ventas_actuales['total'] - ventas_anteriores['total']) / ventas_anteriores['total']) * 100
@@ -695,11 +692,11 @@ class FinanzasMetrics:
         # 4. Alerta: Ticket promedio bajo
         ticket_actual = Venta.objects.filter(
             fecha__gte=fecha_inicio_dt, fecha__lt=fecha_fin_dt
-        ).aggregate(promedio=Avg('total_con_iva'))
+        ).aggregate(promedio=Avg('total'))
 
         ticket_historico = Venta.objects.filter(
             fecha__lt=fecha_inicio_dt
-        ).aggregate(promedio=Avg('total_con_iva'))
+        ).aggregate(promedio=Avg('total'))
 
         if ticket_actual['promedio'] and ticket_historico['promedio']:
             # Convertir a float para evitar errores de tipo Decimal
@@ -726,19 +723,12 @@ class FinanzasMetrics:
         """
         fecha_inicio_dt, fecha_fin_dt = _date_to_datetime_range(fecha_inicio, fecha_fin)
 
-        # Solo considerar productos que tienen costo_unitario definido
-        cogs = DetalleVenta.objects.filter(
-            venta__fecha__gte=fecha_inicio_dt,
-            venta__fecha__lt=fecha_fin_dt,
-            producto__costo_unitario__isnull=False
-        ).aggregate(
-            total_costo=Coalesce(
-                Sum(F('cantidad') * F('producto__costo_unitario'), output_field=DecimalField()),
-                Decimal('0')
-            )
-        )
-
-        return float(cogs['total_costo'])
+        # NOTA: Costo está en Lote.precio_costo_unitario, no en Producto
+        # Para calcular COGS real necesitaríamos rastrear qué lote se vendió en cada DetalleVenta
+        # Por ahora retornamos 0 hasta implementar la trazabilidad completa
+        # TODO: Agregar FK lote en DetalleVenta para cálculo preciso de COGS
+        
+        return 0.0
 
     @staticmethod
     def utilidad_bruta(fecha_inicio=None, fecha_fin=None):
@@ -748,7 +738,7 @@ class FinanzasMetrics:
         resumen = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
         costo = FinanzasMetrics.costo_ventas(fecha_inicio, fecha_fin)
 
-        ventas_totales = resumen['total_sin_iva']  # Sin IVA para cálculo correcto
+        ventas_totales = resumen['total_sin_iva']  # total_sin_iva viene del return del resumen_periodo
         utilidad = ventas_totales - costo
 
         return {
@@ -874,23 +864,17 @@ class FinanzasMetrics:
         """
         fecha_inicio_dt, fecha_fin_dt = _date_to_datetime_range(fecha_inicio, fecha_fin)
 
-        filtros = Q(producto__costo_unitario__isnull=False)
-        filtros &= Q(venta__fecha__gte=fecha_inicio_dt, venta__fecha__lt=fecha_fin_dt)
+        filtros = Q(venta__fecha__gte=fecha_inicio_dt, venta__fecha__lt=fecha_fin_dt)
 
         productos = DetalleVenta.objects.filter(filtros).values(
             'producto__id',
             'producto__nombre',
             'producto__categoria__nombre',
-            'producto__precio',
-            'producto__costo_unitario'
+            'producto__precio_venta'
         ).annotate(
             cantidad_vendida=Sum('cantidad'),
             ingresos_totales=Sum(
                 F('cantidad') * F('precio_unitario'),
-                output_field=DecimalField()
-            ),
-            costo_total=Sum(
-                F('cantidad') * F('producto__costo_unitario'),
                 output_field=DecimalField()
             )
         ).order_by('-ingresos_totales')[:limite]
@@ -898,21 +882,19 @@ class FinanzasMetrics:
         resultado = []
         for p in productos:
             ingresos = float(p['ingresos_totales'])
-            costo = float(p['costo_total'])
-            utilidad = ingresos - costo
-            margen_pct = (utilidad / ingresos * 100) if ingresos > 0 else 0
 
             resultado.append({
                 'producto_id': p['producto__id'],
                 'nombre': p['producto__nombre'],
                 'categoria': p['producto__categoria__nombre'],
                 'cantidad_vendida': p['cantidad_vendida'],
-                'precio_venta': float(p['producto__precio']),
-                'costo_unitario': float(p['producto__costo_unitario']),
+                'precio_venta': float(p['producto__precio_venta']),
                 'ingresos_totales': ingresos,
-                'costo_total': costo,
-                'utilidad_bruta': utilidad,
-                'margen_bruto_pct': round(margen_pct, 2)
+                # Costo/utilidad omitidos - requieren trazabilidad de lotes
+                'costo_unitario': 0,
+                'costo_total': 0,
+                'utilidad_bruta': 0,
+                'margen_bruto_pct': 0
             })
 
         return resultado
@@ -933,7 +915,7 @@ class FinanzasMetrics:
         ).extra(
             select={'dia': 'DATE(fecha)'}
         ).values('dia').annotate(
-            total=Sum('total_con_iva')
+            total=Sum('total')
         ).order_by('dia')
 
         # Gastos por día
