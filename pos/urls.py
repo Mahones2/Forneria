@@ -31,7 +31,8 @@ router.register(r'movimientos-inventario', views.MovimientoInventarioViewSet)
 urlpatterns = [
     path('checkout/', views.checkout, name='checkout'),
     path("sistema/", login_required(views.inicio), name='inicio'),
-    path("dashboard/", login_required(views.dashboard), name='dashboard'),
+    path("dashboard/", login_required(views.dashboard_principal), name='dashboard'),
+    path("dashboard/simple/", login_required(views.dashboard), name='dashboard-simple'),
     # Páginas internas navegables desde la barra lateral (UI)
     path("ventas/", login_required(views.ventas_page), name='ventas'),
     path("inventario/", login_required(views.inventario_page), name='inventario'),

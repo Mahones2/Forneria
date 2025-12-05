@@ -32,6 +32,7 @@
                         {% if user|in_group:"Administrador" or user.is_superuser %}
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'dashboard' %}">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'analytics:dashboard-finanzas' %}">Dashboard Finanzas</a></li>
+                            <li class="nav-item"><a class="nav-link text-white" href="{% url 'inventario:dashboard-inventario' %}">Dashboard Inventario</a></li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'ventas' %}">Ventas</a></li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'inventario' %}">Inventario</a></li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'pedidos' %}">Pedidos</a></li>

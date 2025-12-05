@@ -1,0 +1,495 @@
+{% extends 'pos/basepos.html' %}
+{% load static %}
+
+{% block content %}
+<div class="py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">Dashboard Principal</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <small class="text-muted me-2">Última actualización: <span id="ultimo-update">{{ fecha_actual }}</span></small>
+            <button class="btn btn-sm btn-primary" id="btn-refresh" title="Actualizar datos">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros de Fecha -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filtro-fechas" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" name="fecha_inicio" id="fecha_inicio" value="{{ fecha_inicio }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" name="fecha_fin" id="fecha_fin" value="{{ fecha_fin }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Aplicar Filtros</button>
+                    <button type="button" class="btn btn-secondary" id="btn-reset-filtros">Resetear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabs Principales -->
+    <ul class="nav nav-tabs mb-4" id="dashboardMainTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="ventas-tab" data-bs-toggle="tab" data-bs-target="#ventas-content" type="button">
+                <i class="bi bi-cart"></i> Ventas
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="finanzas-tab" data-bs-toggle="tab" data-bs-target="#finanzas-content" type="button">
+                <i class="bi bi-currency-dollar"></i> Finanzas
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inventario-tab" data-bs-toggle="tab" data-bs-target="#inventario-content" type="button">
+                <i class="bi bi-box-seam"></i> Inventario
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="dashboardMainTabsContent">
+
+        <!-- ==================== TAB 1: VENTAS GENERAL ==================== -->
+        <div class="tab-pane fade show active" id="ventas-content" role="tabpanel">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Ingresos (30 días)</h6>
+                            <h3 class="card-title mb-1">${{ kpis_general.total_ingresos_30|floatformat:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Total Ventas (30 días)</h6>
+                            <h3 class="card-title mb-1">{{ kpis_general.total_ventas_30 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Promedio Venta</h6>
+                            <h3 class="card-title mb-1">${{ kpis_general.promedio_venta_30|floatformat:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Ventas Hoy</h6>
+                            <h3 class="card-title mb-1">{{ kpis_general.ventas_hoy }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Ventas por Día (últimos 60 días)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="ventasDiasChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Ventas por Mes</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="ventasMesesChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: FINANZAS ==================== -->
+        <div class="tab-pane fade" id="finanzas-content" role="tabpanel">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Ventas Hoy</h6>
+                            <h3 class="card-title mb-1">${{ kpis_finanzas.hoy.total|floatformat:0 }}</h3>
+                            <small class="text-muted">{{ kpis_finanzas.hoy.cantidad }} transacciones</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Ventas Periodo</h6>
+                            <h3 class="card-title mb-1">${{ resumen_finanzas.total_ventas|floatformat:0 }}</h3>
+                            <small class="text-muted">{{ resumen_finanzas.cantidad_transacciones }} ventas</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-white-50">Utilidad Neta</h6>
+                            <h3 class="card-title mb-1">${{ utilidad_neta.utilidad_neta|floatformat:0 }}</h3>
+                            <small class="text-white-50">Margen: {{ utilidad_neta.margen_utilidad_neta_pct }}%</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-dark text-white">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-white-50">ROI</h6>
+                            <h3 class="card-title mb-1">{{ roi.roi_porcentaje }}%</h3>
+                            <small class="text-white-50">Return on Investment</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Punto de Equilibrio</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Transacciones Necesarias</p>
+                                    <h4>{{ punto_equilibrio.transacciones_necesarias|floatformat:0 }}</h4>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Transacciones Actuales</p>
+                                    <h4 class="{% if punto_equilibrio.transacciones_actuales >= punto_equilibrio.transacciones_necesarias %}text-success{% else %}text-warning{% endif %}">
+                                        {{ punto_equilibrio.transacciones_actuales }}
+                                    </h4>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Progreso</p>
+                                    <div class="progress" style="height: 30px;">
+                                        <div class="progress-bar {% if punto_equilibrio.porcentaje_alcanzado >= 100 %}bg-success{% else %}bg-warning{% endif %}"
+                                             style="width: {{ punto_equilibrio.porcentaje_alcanzado|floatformat:0 }}%">
+                                            {{ punto_equilibrio.porcentaje_alcanzado|floatformat:0 }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Monto Necesario</p>
+                                    <h4>${{ punto_equilibrio.monto_ventas_necesario|floatformat:0 }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Top 10 Productos Más Vendidos</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if productos_top_finanzas %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Producto</th>
+                                                <th>Categoría</th>
+                                                <th class="text-end">Cantidad</th>
+                                                <th class="text-end">Ingresos</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for producto in productos_top_finanzas %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td><strong>{{ producto.nombre }}</strong></td>
+                                                <td><span class="badge bg-secondary">{{ producto.categoria|default:"Sin categoría" }}</span></td>
+                                                <td class="text-end">{{ producto.cantidad_vendida }}</td>
+                                                <td class="text-end text-success"><strong>${{ producto.ingresos|floatformat:0 }}</strong></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No hay productos vendidos en este periodo</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 3: INVENTARIO ==================== -->
+        <div class="tab-pane fade" id="inventario-content" role="tabpanel">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Total Productos</h6>
+                            <h3 class="card-title mb-1">{{ kpis_inventario.total_productos }}</h3>
+                            <small class="text-muted">{{ kpis_inventario.total_lotes }} lotes activos</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Stock Total</h6>
+                            <h3 class="card-title mb-1">{{ kpis_inventario.stock_total_unidades|floatformat:0 }}</h3>
+                            <small class="text-muted">unidades</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Valor Inventario</h6>
+                            <h3 class="card-title mb-1">${{ kpis_inventario.valor_inventario|floatformat:0 }}</h3>
+                            <small class="text-muted">Precio de venta</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Rotación Anual</h6>
+                            <h3 class="card-title mb-1">{{ rotacion_inventario.rotacion_anual|floatformat:1 }}</h3>
+                            <small class="text-muted">veces/año</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Productos con Stock Bajo</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if productos_bajo_stock %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Categoría</th>
+                                                <th>Lote</th>
+                                                <th class="text-end">Stock Actual</th>
+                                                <th class="text-end">Stock Mínimo</th>
+                                                <th class="text-end">Faltante</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for producto in productos_bajo_stock %}
+                                            <tr>
+                                                <td><strong>{{ producto.producto_nombre }}</strong></td>
+                                                <td><span class="badge bg-secondary">{{ producto.categoria }}</span></td>
+                                                <td>{{ producto.numero_lote }}</td>
+                                                <td class="text-end text-danger"><strong>{{ producto.stock_actual }}</strong></td>
+                                                <td class="text-end">{{ producto.stock_minimo }}</td>
+                                                <td class="text-end text-warning">{{ producto.diferencia }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No hay productos con stock bajo</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if productos_vencer %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">Productos Próximos a Vencer (7 días)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Lote</th>
+                                            <th>Fecha Caducidad</th>
+                                            <th class="text-end">Días Restantes</th>
+                                            <th class="text-end">Stock</th>
+                                            <th class="text-end">Valor en Riesgo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in productos_vencer %}
+                                        <tr>
+                                            <td><strong>{{ producto.producto_nombre }}</strong></td>
+                                            <td>{{ producto.numero_lote }}</td>
+                                            <td>{{ producto.fecha_caducidad }}</td>
+                                            <td class="text-end">
+                                                <span class="badge {% if producto.dias_restantes <= 3 %}bg-danger{% else %}bg-warning{% endif %}">
+                                                    {{ producto.dias_restantes }} días
+                                                </span>
+                                            </td>
+                                            <td class="text-end">{{ producto.stock_actual }}</td>
+                                            <td class="text-end text-danger">${{ producto.valor_riesgo|floatformat:0 }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js y Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// Configuración global
+const colors = {
+    primary: '#0d6efd',
+    success: '#198754',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#0dcaf0'
+};
+
+function formatCurrency(value) {
+    return '$' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón refresh
+    const btnRefresh = document.getElementById('btn-refresh');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', function() {
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Actualizando...';
+            this.disabled = true;
+            location.reload();
+        });
+    }
+
+    // Filtros
+    const filtroFechas = document.getElementById('filtro-fechas');
+    if (filtroFechas) {
+        filtroFechas.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fechaInicio = document.getElementById('fecha_inicio').value;
+            const fechaFin = document.getElementById('fecha_fin').value;
+
+            let url = window.location.pathname;
+            const params = new URLSearchParams();
+            if (fechaInicio) params.append('fecha_inicio', fechaInicio);
+            if (fechaFin) params.append('fecha_fin', fechaFin);
+
+            window.location.href = url + '?' + params.toString();
+        });
+    }
+
+    const btnResetFiltros = document.getElementById('btn-reset-filtros');
+    if (btnResetFiltros) {
+        btnResetFiltros.addEventListener('click', function() {
+            window.location.href = window.location.pathname;
+        });
+    }
+
+    // Gráfico Ventas por Día
+    const dias = {{ dias|safe }};
+    if (dias && dias.length > 0) {
+        const ventasDiasCtx = document.getElementById('ventasDiasChart').getContext('2d');
+        new Chart(ventasDiasCtx, {
+            type: 'line',
+            data: {
+                labels: dias.map(d => d.dia),
+                datasets: [{
+                    label: 'Ventas Diarias',
+                    data: dias.map(d => d.total),
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary + '30',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: context => formatCurrency(context.parsed.y)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    }
+
+    // Gráfico Ventas por Mes
+    const meses = {{ meses|safe }};
+    if (meses && meses.length > 0) {
+        const ventasMesesCtx = document.getElementById('ventasMesesChart').getContext('2d');
+        new Chart(ventasMesesCtx, {
+            type: 'bar',
+            data: {
+                labels: meses.map(m => m.mes),
+                datasets: [{
+                    label: 'Ventas Mensuales',
+                    data: meses.map(m => m.total),
+                    backgroundColor: colors.success,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: context => formatCurrency(context.parsed.y)
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}

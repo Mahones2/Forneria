@@ -751,3 +751,132 @@ class ProductosStockBajoList(generics.ListAPIView):
     def get_queryset(self):
         """Filtra los productos donde el stock_fisico es <= stock_minimo_global."""
         return Producto.objects.filter(stock_fisico__lte=models.F('stock_minimo_global'))
+
+
+def dashboard_principal(request):
+    """
+    Dashboard principal con tabs para Ventas, Finanzas e Inventario
+    """
+    import json
+    from datetime import datetime
+    from analytics.services import FinanzasMetrics
+    from inventario.services import InventarioMetrics
+    from django.db.models import Value, CharField
+    from django.db.models.functions import Concat, ExtractYear, ExtractMonth, ExtractDay, Substr
+    
+    # Helper para fechas
+    def parse_fecha(fecha_str):
+        try:
+            return datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            return None
+    
+    # Helper para serializar Decimal
+    def clean_for_json(obj):
+        if isinstance(obj, dict):
+            return {k: clean_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [clean_for_json(item) for item in obj]
+        elif hasattr(obj, '__float__'):
+            return float(obj)
+        else:
+            return obj
+    
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    # ========== TAB 1: DASHBOARD GENERAL (Ventas) ==========
+    hoy = timezone.now()
+    fecha_inicio_60 = hoy - timezone.timedelta(days=60)
+    
+    ventas_qs = Venta.objects.filter(fecha__gte=fecha_inicio_60)
+    
+    por_dia = (
+        ventas_qs
+        .extra(select={'dia': 'DATE(fecha)'})
+        .values('dia')
+        .annotate(total=Sum('total'))
+        .order_by('dia')
+    )
+    
+    por_mes = (
+        Venta.objects
+        .extra(select={'mes': 'DATE_FORMAT(fecha, "%%Y-%%m-01")'})
+        .values('mes')
+        .annotate(total=Sum('total'))
+        .order_by('mes')
+    )
+    
+    dias = [{'dia': str(r['dia']) if r['dia'] else '', 'total': float(r['total'] or 0)} for r in por_dia]
+    meses = [{'mes': str(r['mes']) if r['mes'] else '', 'total': float(r['total'] or 0)} for r in por_mes]
+    
+    fecha_30 = hoy - timezone.timedelta(days=30)
+    ventas_30_qs = Venta.objects.filter(fecha__gte=fecha_30)
+    
+    total_ingresos_30 = ventas_30_qs.aggregate(s=Sum('total'))['s'] or 0
+    total_ventas_30 = ventas_30_qs.aggregate(c=Count('id'))['c'] or 0
+    promedio_venta_30 = ventas_30_qs.aggregate(a=Avg('total'))['a'] or 0
+    ventas_hoy = Venta.objects.filter(fecha__date=hoy.date()).aggregate(c=Count('id'))['c'] or 0
+    
+    kpis_general = {
+        'total_ingresos_30': float(total_ingresos_30),
+        'total_ventas_30': int(total_ventas_30),
+        'promedio_venta_30': float(promedio_venta_30),
+        'ventas_hoy': int(ventas_hoy),
+    }
+    
+    # ========== TAB 2: DASHBOARD FINANZAS ==========
+    kpis_finanzas = FinanzasMetrics.kpis_hoy()
+    resumen_finanzas = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
+    metricas_avanzadas = FinanzasMetrics.metricas_avanzadas(fecha_inicio, fecha_fin)
+    productos_top_finanzas = FinanzasMetrics.productos_top(limite=10, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    ventas_diarias_finanzas = FinanzasMetrics.ventas_diarias(fecha_inicio, fecha_fin)
+    utilidad_bruta = FinanzasMetrics.utilidad_bruta(fecha_inicio, fecha_fin)
+    gastos_operativos = FinanzasMetrics.gastos_operativos(fecha_inicio, fecha_fin)
+    utilidad_neta = FinanzasMetrics.utilidad_neta(fecha_inicio, fecha_fin)
+    roi = FinanzasMetrics.roi(fecha_inicio, fecha_fin)
+    punto_equilibrio = FinanzasMetrics.punto_equilibrio(fecha_inicio, fecha_fin)
+    
+    # ========== TAB 3: DASHBOARD INVENTARIO ==========
+    kpis_inventario = InventarioMetrics.kpis_generales()
+    productos_bajo_stock = InventarioMetrics.productos_stock_bajo(limite=10)
+    productos_vencer = InventarioMetrics.productos_proximos_vencer(dias=7, limite=10)
+    productos_vencidos = InventarioMetrics.productos_vencidos()
+    stock_categoria = InventarioMetrics.stock_por_categoria()
+    movimientos_inventario = InventarioMetrics.movimientos_inventario(fecha_inicio, fecha_fin)
+    rotacion_inventario = InventarioMetrics.rotacion_inventario(fecha_inicio, fecha_fin)
+    
+    context = {
+        # General
+        'fecha_actual': timezone.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'fecha_inicio': fecha_inicio.isoformat() if fecha_inicio else '',
+        'fecha_fin': fecha_fin.isoformat() if fecha_fin else '',
+        
+        # Tab 1: Ventas General
+        'dias': dias,
+        'meses': meses,
+        'kpis_general': kpis_general,
+        
+        # Tab 2: Finanzas
+        'kpis_finanzas': kpis_finanzas,
+        'resumen_finanzas': resumen_finanzas,
+        'metricas_avanzadas': metricas_avanzadas,
+        'productos_top_finanzas': productos_top_finanzas,
+        'utilidad_bruta': utilidad_bruta,
+        'gastos_operativos': gastos_operativos,
+        'utilidad_neta': utilidad_neta,
+        'roi': roi,
+        'punto_equilibrio': punto_equilibrio,
+        'ventas_diarias_json': json.dumps(clean_for_json(ventas_diarias_finanzas)),
+        
+        # Tab 3: Inventario
+        'kpis_inventario': kpis_inventario,
+        'productos_bajo_stock': productos_bajo_stock,
+        'productos_vencer': productos_vencer,
+        'productos_vencidos': productos_vencidos,
+        'stock_categoria_json': json.dumps(clean_for_json(stock_categoria)),
+        'movimientos_json': json.dumps(clean_for_json(movimientos_inventario)),
+        'rotacion_inventario': rotacion_inventario,
+    }
+    
+    return render(request, 'dashboard_principal.html', context)
