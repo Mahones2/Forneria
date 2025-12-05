@@ -16,11 +16,14 @@ DATABASES = {
 }
 
 # Ajustes convenientes para desarrollo
-# En entornos locales normalmente DEBUG=True, pero podemos desactivarlo
-# para que Django muestre páginas de error estándar (500/404). Ten en
-# cuenta que con DEBUG=False el servidor de desarrollo no sirve archivos
-# estáticos automáticamente y debes configurar `ALLOWED_HOSTS` correctamente.
-DEBUG = False
+# En entornos locales normalmente DEBUG=True para poder servir archivos
+# estáticos con el servidor de desarrollo y ver errores detallados.
+# IMPORTANTE: no dejes DEBUG=True en producción.
+DEBUG = True
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # Evitar sobrescribir secretos de producción aquí. Usa este archivo solo en desarrollo local.
+
+# Ajustes de autenticación para desarrollo
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/pos/sistema/'

@@ -1,0 +1,59 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+{% load currency %}
+
+{% block content %}
+<div class="container" style="padding:2rem;">
+  <h2>Cliente: {{ cliente.nombre|default:'(sin nombre)' }} <small class="text-muted">({{ cliente.rut }})</small></h2>
+  <p>Correo: {{ cliente.correo|default:'-' }}</p>
+
+  <div class="mb-3">
+    <a class="btn btn-outline-primary" href="?export=csv">Exportar compras (CSV)</a>
+    <a class="btn btn-secondary" href="{% url 'clientes' %}">Volver a clientes</a>
+  </div>
+
+  <h4>Compras (más recientes)</h4>
+  <table class="table table-sm table-striped">
+    <thead><tr><th>Folio</th><th>Fecha</th><th>Total</th><th>Pagado</th><th>Vuelto</th><th>Canal</th></tr></thead>
+    <tbody>
+      {% for v in ventas %}
+      <tr>
+        <td>{{ v.folio_documento }}</td>
+        <td>{{ v.fecha|date:"Y-m-d H:i" }}</td>
+        <td>{{ v.total|clp }}</td>
+        <td>{{ v.monto_pagado|default:'-'|clp }}</td>
+        <td>{{ v.vuelto|default:'-'|clp }}</td>
+        <td>{{ v.canal_venta }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No hay compras registradas para este cliente.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if page_obj and page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="Paginación compras">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+      {% endif %}
+      {% for p in page_obj.paginator.page_range %}
+        {% if p == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+        {% else %}
+          <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

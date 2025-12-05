@@ -50,7 +50,7 @@ class FinanzasMetrics:
             total_ventas=Coalesce(Sum('total'), Decimal('0')),
             cantidad_transacciones=Count('id'),
             ticket_promedio=Coalesce(Avg('total'), Decimal('0')),
-            total_sin_iva=Coalesce(Sum('neto'), Decimal('0')),
+            neto=Coalesce(Sum('neto'), Decimal('0')),
             total_iva=Coalesce(Sum('iva'), Decimal('0')),
             total_descuentos=Coalesce(Sum('detalles__descuento'), Decimal('0'))
         )
@@ -59,7 +59,7 @@ class FinanzasMetrics:
             'total_ventas': float(resultado['total_ventas']),
             'cantidad_transacciones': resultado['cantidad_transacciones'],
             'ticket_promedio': float(resultado['ticket_promedio']),
-            'total_sin_iva': float(resultado['total_sin_iva']),
+            'neto': float(resultado['neto']),
             'total_iva': float(resultado['total_iva']),
             'total_descuentos': float(resultado['total_descuentos']),
             'fecha_inicio': fecha_inicio_dt.date().isoformat() if fecha_inicio_dt else '',
@@ -196,15 +196,16 @@ class FinanzasMetrics:
             fecha__gte=fecha_inicio_dt,
             fecha__lt=fecha_fin_dt
         ).values('canal_venta').annotate(
-            total=Sum('total'),
-            cantidad=Count('id')
+            total_ventas=Sum('total'),
+            cantidad=Count('id'),
+            ticket_promedio=Avg('total')
         )
 
         return [{
             'canal': c['canal_venta'],
-            'total': float(c['total']),
+            'total': float(c['total_ventas']),
             'cantidad': c['cantidad'],
-            'ticket_promedio': float(c['total']) / c['cantidad'] if c['cantidad'] > 0 else 0
+            'ticket_promedio': float(c['ticket_promedio'])
         } for c in canales]
 
     @staticmethod
@@ -250,7 +251,8 @@ class FinanzasMetrics:
             'cliente__rut'
         ).annotate(
             total_compras=Sum('total'),
-            num_compras=Count('id')
+            num_compras=Count('id'),
+            ticket_promedio=Avg('total')
         ).order_by('-total_compras')[:limite]
 
         return [{
@@ -259,7 +261,7 @@ class FinanzasMetrics:
             'rut': c['cliente__rut'],
             'total_compras': float(c['total_compras']),
             'num_compras': c['num_compras'],
-            'ticket_promedio': float(c['total_compras']) / c['num_compras'] if c['num_compras'] > 0 else 0
+            'ticket_promedio': float(c['ticket_promedio'])
         } for c in clientes]
 
     @staticmethod
@@ -317,15 +319,27 @@ class FinanzasMetrics:
         """
         fecha_inicio_dt, fecha_fin_dt = _date_to_datetime_range(fecha_inicio, fecha_fin)
 
+        # Calcular descuentos desde los detalles
+        total_descuentos_calc = DetalleVenta.objects.filter(
+            venta__fecha__gte=fecha_inicio_dt,
+            venta__fecha__lt=fecha_fin_dt
+        ).aggregate(total=Coalesce(Sum('descuento'), Decimal('0')))['total']
+
         resultado = Venta.objects.filter(
             fecha__gte=fecha_inicio_dt, fecha__lt=fecha_fin_dt
         ).aggregate(
-            total_bruto=Coalesce(Sum(F('neto') + F('detalles__descuento')), Decimal('0')),
             total_neto=Coalesce(Sum('neto'), Decimal('0')),
-            total_descuentos=Coalesce(Sum('detalles__descuento'), Decimal('0')),
             total_iva=Coalesce(Sum('iva'), Decimal('0')),
             cantidad_ventas=Count('id')
         )
+
+        # Calcular bruto como neto + descuentos
+        total_neto = float(resultado['total_neto'])
+        total_descuentos = float(total_descuentos_calc)
+        total_bruto = total_neto + total_descuentos
+
+        resultado['total_bruto'] = Decimal(str(total_bruto))
+        resultado['total_descuentos'] = Decimal(str(total_descuentos))
 
         # Cálculos derivados
         total_bruto = float(resultado['total_bruto'])
@@ -370,6 +384,7 @@ class FinanzasMetrics:
         ).extra(
             select={'dia_semana': 'DAYOFWEEK(fecha)'}
         ).values('dia_semana').annotate(
+            ticket_promedio=Avg('total'),
             total=Sum('total'),
             cantidad=Count('id')
         ).order_by('dia_semana')
@@ -391,7 +406,7 @@ class FinanzasMetrics:
             'por_dia_semana': [{
                 'dia': dias_semana_nombres.get(int(d['dia_semana']), 'Desconocido'),
                 'dia_numero': int(d['dia_semana']),
-                'ticket_promedio': float(d['total']) / d['cantidad'] if d['cantidad'] > 0 else 0,
+                'ticket_promedio': float(d['ticket_promedio']),
                 'total': float(d['total']),
                 'cantidad': d['cantidad']
             } for d in por_dia_semana_list]
@@ -723,12 +738,19 @@ class FinanzasMetrics:
         """
         fecha_inicio_dt, fecha_fin_dt = _date_to_datetime_range(fecha_inicio, fecha_fin)
 
-        # NOTA: Costo está en Lote.precio_costo_unitario, no en Producto
-        # Para calcular COGS real necesitaríamos rastrear qué lote se vendió en cada DetalleVenta
-        # Por ahora retornamos 0 hasta implementar la trazabilidad completa
-        # TODO: Agregar FK lote en DetalleVenta para cálculo preciso de COGS
-        
-        return 0.0
+        # Solo considerar productos que tienen costo_unitario definido
+        cogs = DetalleVenta.objects.filter(
+            venta__fecha__gte=fecha_inicio_dt,
+            venta__fecha__lt=fecha_fin_dt,
+            producto__costo_unitario__isnull=False
+        ).aggregate(
+            total_costo=Coalesce(
+                Sum(F('cantidad') * F('producto__costo_unitario'), output_field=DecimalField()),
+                Decimal('0')
+            )
+        )
+
+        return float(cogs['total_costo'])
 
     @staticmethod
     def utilidad_bruta(fecha_inicio=None, fecha_fin=None):
@@ -738,7 +760,7 @@ class FinanzasMetrics:
         resumen = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
         costo = FinanzasMetrics.costo_ventas(fecha_inicio, fecha_fin)
 
-        ventas_totales = resumen['total_sin_iva']  # total_sin_iva viene del return del resumen_periodo
+        ventas_totales = resumen['neto']  # Sin IVA para cálculo correcto
         utilidad = ventas_totales - costo
 
         return {
@@ -864,17 +886,23 @@ class FinanzasMetrics:
         """
         fecha_inicio_dt, fecha_fin_dt = _date_to_datetime_range(fecha_inicio, fecha_fin)
 
-        filtros = Q(venta__fecha__gte=fecha_inicio_dt, venta__fecha__lt=fecha_fin_dt)
+        filtros = Q(producto__costo_unitario__isnull=False)
+        filtros &= Q(venta__fecha__gte=fecha_inicio_dt, venta__fecha__lt=fecha_fin_dt)
 
         productos = DetalleVenta.objects.filter(filtros).values(
             'producto__id',
             'producto__nombre',
             'producto__categoria__nombre',
-            'producto__precio_venta'
+            'producto__precio_venta',
+            'producto__costo_unitario'
         ).annotate(
             cantidad_vendida=Sum('cantidad'),
             ingresos_totales=Sum(
                 F('cantidad') * F('precio_unitario'),
+                output_field=DecimalField()
+            ),
+            costo_total=Sum(
+                F('cantidad') * F('producto__costo_unitario'),
                 output_field=DecimalField()
             )
         ).order_by('-ingresos_totales')[:limite]
@@ -882,6 +910,9 @@ class FinanzasMetrics:
         resultado = []
         for p in productos:
             ingresos = float(p['ingresos_totales'])
+            costo = float(p['costo_total'])
+            utilidad = ingresos - costo
+            margen_pct = (utilidad / ingresos * 100) if ingresos > 0 else 0
 
             resultado.append({
                 'producto_id': p['producto__id'],
@@ -889,12 +920,11 @@ class FinanzasMetrics:
                 'categoria': p['producto__categoria__nombre'],
                 'cantidad_vendida': p['cantidad_vendida'],
                 'precio_venta': float(p['producto__precio_venta']),
+                'costo_unitario': float(p['producto__costo_unitario']),
                 'ingresos_totales': ingresos,
-                # Costo/utilidad omitidos - requieren trazabilidad de lotes
-                'costo_unitario': 0,
-                'costo_total': 0,
-                'utilidad_bruta': 0,
-                'margen_bruto_pct': 0
+                'costo_total': costo,
+                'utilidad_bruta': utilidad,
+                'margen_bruto_pct': round(margen_pct, 2)
             })
 
         return resultado

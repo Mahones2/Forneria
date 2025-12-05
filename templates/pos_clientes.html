@@ -1,0 +1,72 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding:2rem;">
+  <h2>Clientes</h2>
+  <p>Listado de clientes</p>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+      <input type="text" name="rut" class="form-control" placeholder="RUT" value="{{ filter_rut|default:'' }}">
+    </div>
+    <div class="col-auto">
+      <input type="text" name="nombre" class="form-control" placeholder="Nombre" value="{{ filter_nombre|default:'' }}">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" type="submit">Filtrar</button>
+      <a href="{% url 'clientes' %}" class="btn btn-secondary">Limpiar</a>
+    </div>
+  </form>
+
+  <table class="table table-sm">
+    <thead>
+      <tr><th>RUT</th><th>Nombre</th><th>Correo</th></tr>
+    </thead>
+    <tbody>
+      {% for c in clientes %}
+      <tr>
+        <td>{{ c.rut }}</td>
+        <td>
+          <a href="{% url 'cliente_detail' c.rut %}">{{ c.nombre }}</a>
+        </td>
+        <td>
+          {{ c.correo }}
+          {% if c.rut %}
+            <div><a href="{% url 'cliente_detail' c.rut %}">Ver ficha y compras</a></div>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No hay clientes.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if page_obj and page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="Paginación clientes">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_rut %}&rut={{ filter_rut|urlencode }}{% endif %}{% if filter_nombre %}&nombre={{ filter_nombre|urlencode }}{% endif %}">Anterior</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+      {% endif %}
+
+      {% for p in page_obj.paginator.page_range %}
+        {% if p == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+        {% else %}
+          <li class="page-item"><a class="page-link" href="?page={{ p }}{% if filter_rut %}&rut={{ filter_rut|urlencode }}{% endif %}{% if filter_nombre %}&nombre={{ filter_nombre|urlencode }}{% endif %}">{{ p }}</a></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_rut %}&rut={{ filter_rut|urlencode }}{% endif %}{% if filter_nombre %}&nombre={{ filter_nombre|urlencode }}{% endif %}">Siguiente</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,263 @@
+[
+  {
+    "model": "pos.categoria",
+    "pk": 1,
+    "fields": {
+      "nombre": "Panadería",
+      "descripcion": "Productos de panadería y masas"
+    }
+  },
+  {
+    "model": "pos.categoria",
+    "pk": 2,
+    "fields": {
+      "nombre": "Bebidas",
+      "descripcion": "Bebidas frías y calientes"
+    }
+  },
+  {
+    "model": "pos.categoria",
+    "pk": 3,
+    "fields": {
+      "nombre": "Lácteos",
+      "descripcion": "Productos lácteos y derivados"
+    }
+  },
+  {
+    "model": "pos.categoria",
+    "pk": 4,
+    "fields": {
+      "nombre": "Snacks",
+      "descripcion": "Snacks y golosinas"
+    }
+  },
+  {
+    "model": "pos.categoria",
+    "pk": 5,
+    "fields": {
+      "nombre": "Congelados",
+      "descripcion": "Productos congelados"
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 1,
+    "fields": {
+      "codigo_barra": "7891234567890",
+      "nombre": "Pan Hallulla",
+      "descripcion": "Pan hallulla tradicional",
+      "marca": "La Forneria",
+      "precio_venta": "1500.00",
+      "tipo": "Pan",
+      "presentacion": "Unidad",
+      "categoria": 1,
+      "stock_fisico": 50,
+      "stock_minimo_global": 10
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 2,
+    "fields": {
+      "codigo_barra": "7891234567891",
+      "nombre": "Pan Marraqueta",
+      "descripcion": "Pan marraqueta fresco",
+      "marca": "La Forneria",
+      "precio_venta": "1200.00",
+      "tipo": "Pan",
+      "presentacion": "Unidad",
+      "categoria": 1,
+      "stock_fisico": 80,
+      "stock_minimo_global": 15
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 3,
+    "fields": {
+      "codigo_barra": "7891234567892",
+      "nombre": "Coca Cola",
+      "descripcion": "Bebida gaseosa 500ml",
+      "marca": "Coca Cola",
+      "precio_venta": "1800.00",
+      "tipo": "Bebida",
+      "presentacion": "500ml",
+      "categoria": 2,
+      "stock_fisico": 120,
+      "stock_minimo_global": 20
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 4,
+    "fields": {
+      "codigo_barra": "7891234567893",
+      "nombre": "Leche Entera",
+      "descripcion": "Leche entera 1 litro",
+      "marca": "Colun",
+      "precio_venta": "1200.00",
+      "tipo": "Lácteo",
+      "presentacion": "1L",
+      "categoria": 3,
+      "stock_fisico": 45,
+      "stock_minimo_global": 15
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 5,
+    "fields": {
+      "codigo_barra": "7891234567894",
+      "nombre": "Yogurt Natural",
+      "descripcion": "Yogurt natural 1kg",
+      "marca": "Soprole",
+      "precio_venta": "2500.00",
+      "tipo": "Lácteo",
+      "presentacion": "1Kg",
+      "categoria": 3,
+      "stock_fisico": 30,
+      "stock_minimo_global": 10
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 6,
+    "fields": {
+      "codigo_barra": "7891234567895",
+      "nombre": "Papas Fritas",
+      "descripcion": "Papas fritas sabor original",
+      "marca": "Lays",
+      "precio_venta": "2000.00",
+      "tipo": "Snack",
+      "presentacion": "150g",
+      "categoria": 4,
+      "stock_fisico": 60,
+      "stock_minimo_global": 20
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 7,
+    "fields": {
+      "codigo_barra": "7891234567896",
+      "nombre": "Helado Vainilla",
+      "descripcion": "Helado de vainilla 1L",
+      "marca": "Bresler",
+      "precio_venta": "4500.00",
+      "tipo": "Helado",
+      "presentacion": "1L",
+      "categoria": 5,
+      "stock_fisico": 25,
+      "stock_minimo_global": 8
+    }
+  },
+  {
+    "model": "pos.producto",
+    "pk": 8,
+    "fields": {
+      "codigo_barra": "7891234567897",
+      "nombre": "Galletas Chocolate",
+      "descripcion": "Galletas con chips de chocolate",
+      "marca": "McKay",
+      "precio_venta": "1800.00",
+      "tipo": "Galleta",
+      "presentacion": "250g",
+      "categoria": 4,
+      "stock_fisico": 40,
+      "stock_minimo_global": 12
+    }
+  },
+  {
+    "model": "pos.lote",
+    "pk": 1,
+    "fields": {
+      "producto": 1,
+      "numero_lote": "L001-2025",
+      "fecha_elaboracion": "2025-11-27",
+      "fecha_caducidad": "2025-12-05",
+      "precio_costo_unitario": "800.00",
+      "stock_inicial": 100,
+      "stock_actual": 50,
+      "creado": "2025-11-27T00:00:00Z",
+      "eliminado": null
+    }
+  },
+  {
+    "model": "pos.lote",
+    "pk": 2,
+    "fields": {
+      "producto": 2,
+      "numero_lote": "L002-2025",
+      "fecha_elaboracion": "2025-11-27",
+      "fecha_caducidad": "2025-12-05",
+      "precio_costo_unitario": "600.00",
+      "stock_inicial": 150,
+      "stock_actual": 80,
+      "creado": "2025-11-27T00:00:00Z",
+      "eliminado": null
+    }
+  },
+  {
+    "model": "pos.lote",
+    "pk": 3,
+    "fields": {
+      "producto": 3,
+      "numero_lote": "L003-2025",
+      "fecha_elaboracion": "2025-10-01",
+      "fecha_caducidad": "2026-10-01",
+      "precio_costo_unitario": "1200.00",
+      "stock_inicial": 200,
+      "stock_actual": 120,
+      "creado": "2025-11-27T00:00:00Z",
+      "eliminado": null
+    }
+  },
+  {
+    "model": "pos.lote",
+    "pk": 4,
+    "fields": {
+      "producto": 4,
+      "numero_lote": "L004-2025",
+      "fecha_elaboracion": "2025-11-20",
+      "fecha_caducidad": "2025-12-20",
+      "precio_costo_unitario": "800.00",
+      "stock_inicial": 60,
+      "stock_actual": 45,
+      "creado": "2025-11-27T00:00:00Z",
+      "eliminado": null
+    }
+  },
+  {
+    "model": "pos.cliente",
+    "pk": 1,
+    "fields": {
+      "rut": "12345678-9",
+      "nombre": "Juan Pérez",
+      "correo": "juan.perez@email.com",
+      "telefono": "+56912345678",
+      "es_empresa": false
+    }
+  },
+  {
+    "model": "pos.cliente",
+    "pk": 2,
+    "fields": {
+      "rut": "98765432-1",
+      "nombre": "María González",
+      "correo": "maria.gonzalez@email.com",
+      "telefono": "+56987654321",
+      "es_empresa": false
+    }
+  },
+  {
+    "model": "pos.cliente",
+    "pk": 3,
+    "fields": {
+      "rut": "76543210-K",
+      "nombre": "Empresa ABC Ltda.",
+      "correo": "contacto@abc.cl",
+      "telefono": "+56223456789",
+      "es_empresa": true
+    }
+  }
+]

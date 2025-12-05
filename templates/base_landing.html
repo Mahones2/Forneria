@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>La Forneria - Inicio</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/pos.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'css/landing_forneria/styles.css' %}">
+  <style>
+    .landing-header { display:flex; align-items:center; justify-content:space-between; padding:18px 28px; background:#fff; border-bottom:1px solid rgba(0,0,0,0.04); }
+    .landing-logo img{ max-height:56px; }
+    .landing-nav { display:flex; gap:12px; align-items:center; }
+    .landing-cta { background:#2d6cdf; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; }
+    .container-main{ max-width:1100px; margin:24px auto; padding:0 16px; }
+    .category-list{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+    .category-item{ background:#fff; padding:8px 12px; border-radius:8px; box-shadow:0 6px 18px rgba(10,12,20,0.03); }
+  </style>
+</head>
+<body>
+  <header class="landing-header">
+    <div class="landing-logo">
+      <a href="/"><img src="{% static 'images/logo.png' %}" alt="La Forneria"></a>
+    </div>
+    <nav class="landing-nav">
+      <a href="/pos/sistema/">Punto de venta</a>
+      <a href="/pos/inventario/">Inventario</a>
+      <a href="/pos/clientes/">Clientes</a>
+      <a href="/pos/dashboard/">Dashboard</a>
+      <a class="landing-cta" href="/pos/sistema/">Ir al POS</a>
+    </nav>
+  </header>
+
+  <main class="container-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer style="text-align:center; padding:24px 0; color:#666; font-size:0.9rem;">
+    © La Forneria - Demo
+  </footer>
+
+</body>
+</html>

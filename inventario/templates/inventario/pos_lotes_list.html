@@ -1,0 +1,31 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding:2rem; max-width:900px;">
+  <h2>Lotes para {{ producto.nombre }}</h2>
+  <div style="margin-bottom:12px;">
+    <a class="button1" href="{% url 'lote_create_product' producto.id %}">Crear lote</a>
+    <a class="btn-secondary" href="{% url 'inventario' %}">Volver al inventario</a>
+  </div>
+
+  <table class="table table-hover">
+    <thead><tr><th>Lote</th><th>Elaboración</th><th>Caducidad</th><th>Stock actual</th><th>Acciones</th></tr></thead>
+    <tbody>
+      {% for l in lotes %}
+      <tr>
+        <td>{{ l.numero_lote }}</td>
+        <td>{{ l.fecha_elaboracion }}</td>
+        <td>{{ l.fecha_caducidad }}</td>
+        <td>{{ l.stock_actual }}</td>
+        <td>
+          <a href="{% url 'lote_edit' l.id %}">Editar</a> | <a href="{% url 'lote_delete' l.id %}">Eliminar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No hay lotes para este producto.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

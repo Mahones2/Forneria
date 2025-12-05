@@ -1,0 +1,80 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+{% load currency %}
+
+{% block content %}
+<div class="container" style="padding:2rem;">
+  <h2>Ventas</h2>
+  <p>Últimas ventas registradas</p>
+
+  <form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+      <input type="text" name="rut" class="form-control" placeholder="RUT (ej: 11111111-1)" value="{{ filter_rut|default:'' }}">
+    </div>
+    <div class="col-auto">
+      <input type="text" name="nombre" class="form-control" placeholder="Nombre cliente" value="{{ filter_nombre|default:'' }}">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" type="submit">Filtrar</button>
+      <a href="{% url 'ventas' %}" class="btn btn-secondary">Limpiar</a>
+    </div>
+  </form>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Folio</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Empleado</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in ventas %}
+      <tr>
+        <td>{{ v.folio_documento }}</td>
+        <td>{{ v.fecha|date:"Y-m-d H:i" }}</td>
+        <td>
+          {% if v.cliente %}
+            {{ v.cliente.nombre }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>{% if v.empleado %}{{ v.empleado.nombres }} {{ v.empleado.apellido_paterno }}{% else %}-{% endif %}</td>
+        <td>{{ v.total|clp }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No hay ventas registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if page_obj and page_obj.paginator.num_pages > 1 %}
+  <nav aria-label="Paginación ventas">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_rut %}&rut={{ filter_rut|urlencode }}{% endif %}{% if filter_nombre %}&nombre={{ filter_nombre|urlencode }}{% endif %}">Anterior</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+      {% endif %}
+
+      {% for p in page_obj.paginator.page_range %}
+        {% if p == page_obj.number %}
+          <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+        {% else %}
+          <li class="page-item"><a class="page-link" href="?page={{ p }}{% if filter_rut %}&rut={{ filter_rut|urlencode }}{% endif %}{% if filter_nombre %}&nombre={{ filter_nombre|urlencode }}{% endif %}">{{ p }}</a></li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_rut %}&rut={{ filter_rut|urlencode }}{% endif %}{% if filter_nombre %}&nombre={{ filter_nombre|urlencode }}{% endif %}">Siguiente</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

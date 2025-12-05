@@ -13,6 +13,58 @@ function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
+/**
+ * Animación: crear un clon visual que "vuele" desde el elemento fuente hasta el contenedor del carrito.
+ * callback se ejecuta cuando la animación termina.
+ */
+function animateFlyToCart(sourceEl, label, callback) {
+  try {
+    const cartEl = document.getElementById('cart');
+    if (!cartEl) { if (callback) callback(); return; }
+
+    const rect = sourceEl.getBoundingClientRect();
+    const cartRect = cartEl.getBoundingClientRect();
+    const clone = document.createElement('div');
+    clone.className = 'fly-clone small';
+    clone.textContent = label;
+    document.body.appendChild(clone);
+
+    // Posición inicial (considerar scroll)
+    const startLeft = rect.left + window.scrollX;
+    const startTop = rect.top + window.scrollY;
+    clone.style.left = `${startLeft}px`;
+    clone.style.top = `${startTop}px`;
+    clone.style.transform = 'translate(0,0) scale(1)';
+    clone.style.opacity = '1';
+
+    // Forzar reflow
+    clone.getBoundingClientRect();
+
+    // Calcular desplazamiento al centro aproximado del carrito
+    const destX = (cartRect.left + cartRect.width/2) - (rect.left + rect.width/2);
+    const destY = (cartRect.top + cartRect.height/2) - (rect.top + rect.height/2);
+
+    // Aplicar transform para animar
+    requestAnimationFrame(() => {
+      clone.style.transform = `translate(${destX}px, ${destY}px) scale(0.28)`;
+      clone.style.opacity = '0.95';
+    });
+
+    // Cuando la transición termine, limpiar y llamar callback
+    const onEnd = (ev) => {
+      if (ev.propertyName !== 'transform') return;
+      clone.removeEventListener('transitionend', onEnd);
+      // fundir y eliminar
+      clone.style.opacity = '0';
+      setTimeout(() => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        if (callback) callback();
+      }, 80);
+    };
+    clone.addEventListener('transitionend', onEnd);
+  } catch (err) { console.error('fly animation failed', err); if (callback) callback(); }
+}
+
 function renderCart() {
   const cart = loadCart();
   const ul = document.getElementById('cart-items');
@@ -21,7 +73,39 @@ function renderCart() {
   let total = 0;
   cart.forEach(item => {
     const li = document.createElement('li');
-    li.innerHTML = `<span>${item.nombre} x${item.qty}</span><span>${formatCLP(item.precio*item.qty)} <button data-id="${item.id}" class="remove-item">x</button></span>`;
+    li.className = 'cart-item';
+    // left column
+    const left = document.createElement('div');
+    left.className = 'item-left';
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'item-name';
+    nameDiv.textContent = item.nombre;
+    const qtySpan = document.createElement('div');
+    qtySpan.className = 'item-qty';
+    qtySpan.textContent = `x${item.qty}`;
+    nameDiv.appendChild(document.createTextNode(' '));
+    nameDiv.appendChild(qtySpan);
+    left.appendChild(nameDiv);
+
+    // right column
+    const right = document.createElement('div');
+    right.className = 'item-right';
+    const priceDiv = document.createElement('div');
+    priceDiv.className = 'item-price';
+    priceDiv.textContent = formatCLP(item.precio * item.qty);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.setAttribute('data-id', item.id);
+    removeBtn.className = 'remove-item';
+    removeBtn.setAttribute('aria-label', 'Eliminar item');
+    // SVG icon (small x)
+    removeBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    right.appendChild(priceDiv);
+    right.appendChild(removeBtn);
+
+    li.appendChild(left);
+    li.appendChild(right);
     ul.appendChild(li);
     total += item.precio * item.qty;
   });
@@ -49,14 +133,17 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCart();
 
   // añadir eventos a botones existentes
-  document.querySelectorAll('.add-to-cart').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = btn.getAttribute('data-id');
-      const nombre = btn.getAttribute('data-nombre');
-      const precio = parseFloat(btn.getAttribute('data-precio')) || 0;
-      addToCart(id, nombre, precio);
+    document.querySelectorAll('.add-to-cart').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        const nombre = btn.getAttribute('data-nombre');
+        const precio = parseFloat(btn.getAttribute('data-precio')) || 0;
+        // Primero mostrar animación, después añadir al carrito
+        animateFlyToCart(btn, nombre, () => {
+          addToCart(id, nombre, precio);
+        });
+      });
     });
-  });
 
   // delegado para remover items
   document.getElementById('cart-items').addEventListener('click', (e) => {
@@ -99,9 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const cart = loadCart();
       if (cart.length === 0) { alert('Carrito vacío'); return; }
       const monto = Number(document.getElementById('monto-pagado').value || 0);
+      const metodoPago = document.getElementById('metodo-pago') ? document.getElementById('metodo-pago').value : 'efectivo';
       const payload = {
         canal_venta: 'presencial',
         monto_pagado: monto || null,
+        metodo_pago: metodoPago,
         items: cart.map(i => ({ producto_id: i.id, cantidad: i.qty, precio_unitario: i.precio, descuento_pct: i.descuento_pct || 0 }))
       };
 
@@ -122,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         // éxito
-        alert(`Venta registrada. Folio: ${data.folio} - Total: ${formatCLP(data.total_con_iva)}${data.vuelto ? ' - Vuelto: ' + formatCLP(data.vuelto) : ''}`);
+        alert(`Venta registrada. Folio: ${data.folio} - Total: ${formatCLP(data.total)}${data.vuelto ? ' - Vuelto: ' + formatCLP(data.vuelto) : ''}`);
         clearCart();
         document.getElementById('cartModal').style.display = 'none';
       } catch (err) {
@@ -196,6 +285,31 @@ function populateCartModal(cart) {
   document.getElementById('cart-total-modal').textContent = formatCLP(total);
   document.getElementById('monto-pagado').value = '';
   document.getElementById('cart-change').textContent = formatCLP(0);
+  // Inicialmente muestra la hora local como fallback
+  try {
+    const now = new Date();
+    const opts = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    const localDt = now.toLocaleString('es-CL', opts).replace(',', '');
+    const dtEl = document.getElementById('cart-datetime');
+    if (dtEl) dtEl.textContent = localDt;
+  } catch (e) {
+    // silencioso si falla el formateo
+  }
+
+  // Reemplazar con la hora del servidor (mejor fuente de verdad). Si falla, conservar local.
+  (async function(){
+    try {
+      const r = await fetch('/pos/server-time/');
+      if (!r.ok) return; // no reemplazar
+      const data = await r.json();
+      if (data && data.formatted) {
+        const dtEl = document.getElementById('cart-datetime');
+        if (dtEl) dtEl.textContent = data.formatted;
+      }
+    } catch (err) {
+      // ignorar y dejar la hora local
+    }
+  })();
   // store totals for updateChange
   document.getElementById('cartModal').dataset.subtotal = subtotal;
   document.getElementById('cartModal').dataset.total = total;

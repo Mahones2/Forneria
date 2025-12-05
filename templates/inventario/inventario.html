@@ -1,0 +1,269 @@
+{% extends "pos/basepos.html" %}
+{% block content %}
+
+    <div class="container mt-4">
+        <h2>Inventario de Productos</h2>
+        
+        <button id="btn-nuevo-producto" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createEditModal">
+            Nuevo Producto
+        </button>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Categoría</th>
+                    <th>Stock Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="createEditModal" tabindex="-1" aria-labelledby="createEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createEditModalLabel">Crear/Editar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="product-id" name="id">
+                        
+                        <fieldset>
+                            <legend>Datos del Producto</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="id_nombre" class="form-label">Nombre</label>
+                                    <input type="text" id="id_nombre" name="nombre" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_precio" class="form-label">Precio</label>
+                                    <input type="number" id="id_precio" name="precio" step="0.01" class="form-control" required>
+                                </div>
+                                <div class="col-md-12 mt-3">
+                                    <label for="id_categoria" class="form-label">Categoría</label>
+                                    <select id="id_categoria" name="categoria" class="form-control" required>
+                                        {% for categoria in categorias %}
+                                            <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="mt-4">
+                            <legend>Información Nutricional</legend>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="id_calorias" class="form-label">Calorías</label>
+                                    <input type="number" id="id_calorias" name="calorias" class="form-control">
+                                </div>
+                                </div>
+                        </fieldset>
+
+                        <fieldset class="mt-4">
+                            <legend>Datos del Lote Principal</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="id_numero_lote" class="form-label">Número de Lote</label>
+                                    <input type="text" id="id_numero_lote" name="numero_lote" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_stock_actual" class="form-label">Stock Actual</label>
+                                    <input type="number" id="id_stock_actual" name="stock_actual" class="form-control">
+                                </div>
+                                </div>
+                        </fieldset>
+                        
+                        <div class="modal-footer mt-4">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success" id="save-product-btn">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const PRODUCTOS_API_URL = 'http://127.0.0.1:8001/pos/productos/'; 
+    const tableBody = document.getElementById('inventory-table-body');
+    const productForm = document.getElementById('productForm');
+    const createEditModalElement = document.getElementById('createEditModal');
+    const createEditModal = new bootstrap.Modal(createEditModalElement);
+
+    // Convertir FormData a JSON
+    function formDataToJson(formData) {
+        const object = {};
+        formData.forEach((value, key) => {
+            if (key !== 'csrfmiddlewaretoken' && key !== 'id') {
+                object[key] = value === "" ? null : value;
+            }
+        });
+        return object;
+    }
+
+    function getCategoryName(categoryId) {
+        const select = document.getElementById('id_categoria');
+        const option = select.querySelector(`option[value="${categoryId}"]`);
+        return option ? option.textContent : `ID: ${categoryId}`;
+    }
+
+    // ============== READ =================
+    async function loadProducts() {
+        try {
+            const response = await fetch(PRODUCTOS_API_URL);
+            if (!response.ok) throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
+            
+            const products = await response.json();
+            if (!Array.isArray(products)) {
+                alert("Error: El endpoint no devolvió una lista válida.");
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            products.forEach(product => {
+                const totalStock = product.stock_total || 0;
+                const categoryName = getCategoryName(product.categoria);
+                const precio = product.precio_venta ? parseFloat(product.precio_venta).toFixed(2) : '0.00';
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.nombre}</td>
+                    <td>$${precio}</td>
+                    <td>${categoryName}</td>
+                    <td>${totalStock}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm edit-btn" data-id="${product.id}" data-bs-toggle="modal" data-bs-target="#createEditModal">Editar</button>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="${product.id}">Eliminar</button>
+                    </td>
+                `;
+            });
+        } catch (error) {
+            console.error("Error al cargar productos:", error);
+            alert(`Error al cargar el inventario: ${error.message}`);
+        }
+    }
+
+    // ============== CREATE / UPDATE =================
+    productForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const productId = document.getElementById('product-id').value;
+        const formData = new FormData(productForm);
+        const jsonData = formDataToJson(formData); 
+        
+        const method = productId ? 'PUT' : 'POST';
+        const url = productId ? `${PRODUCTOS_API_URL}${productId}/` : PRODUCTOS_API_URL;
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN,
+                },
+                body: JSON.stringify(jsonData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                let errorMessage = `Error al guardar producto (${response.status}):`;
+                for (const key in errorData) {
+                    errorMessage += `\n- ${key}: ${errorData[key]}`;
+                }
+                alert(errorMessage);
+                return;
+            }
+
+            createEditModal.hide();
+            productForm.reset();
+            loadProducts();
+            alert(`Producto ${method === 'PUT' ? 'actualizado' : 'creado'} con éxito.`);
+        } catch (error) {
+            console.error("Error de red/conexión:", error);
+            alert("Error de conexión al servidor al intentar guardar.");
+        }
+    });
+
+    // ============== EDIT (llenar formulario) =================
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('edit-btn')) {
+            const id = e.target.dataset.id;
+            try {
+                const response = await fetch(`${PRODUCTOS_API_URL}${id}/`);
+                const productData = await response.json();
+
+                // Producto
+                document.getElementById('product-id').value = productData.id;
+                document.getElementById('id_nombre').value = productData.nombre || '';
+                document.getElementById('id_precio').value = productData.precio_venta || '';
+                document.getElementById('id_categoria').value = productData.categoria;
+
+                // Nutricional
+                const nut = productData.nutricional;
+                if (nut) {
+                    document.getElementById('id_calorias').value = nut.calorias || '';
+                    document.getElementById('id_proteinas').value = nut.proteinas || '';
+                    document.getElementById('id_grasas').value = nut.grasas || '';
+                    document.getElementById('id_carbohidratos').value = nut.carbohidratos || '';
+                    document.getElementById('id_azucares').value = nut.azucares || '';
+                    document.getElementById('id_sodio').value = nut.sodio || '';
+                }
+
+                // Lote (primer lote)
+                const lote = productData.lotes && productData.lotes.length > 0 ? productData.lotes[0] : null;
+                if (lote) {
+                    document.getElementById('id_numero_lote').value = lote.numero_lote || '';
+                    document.getElementById('id_stock_actual').value = lote.stock_actual || '';
+                    document.getElementById('id_fecha_elaboracion').value = lote.fecha_elaboracion ? lote.fecha_elaboracion.substring(0, 10) : '';
+                    document.getElementById('id_fecha_caducidad').value = lote.fecha_caducidad ? lote.fecha_caducidad.substring(0, 10) : '';
+                }
+
+                document.getElementById('createEditModalLabel').textContent = 'Editar Producto';
+            } catch (error) {
+                console.error("Error al obtener datos para edición:", error);
+                alert("No se pudieron cargar los datos del producto.");
+            }
+        }
+    });
+
+    // ============== DELETE =================
+    document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+            const id = e.target.dataset.id;
+            if (confirm(`¿Estás seguro de que quieres eliminar el Producto ID: ${id}?`)) {
+                try {
+                    const response = await fetch(`${PRODUCTOS_API_URL}${id}/`, {
+                        method: "DELETE",
+                        headers: { 'X-CSRFToken': CSRF_TOKEN }
+                    });
+                    
+                    if (response.status === 204) { 
+                        loadProducts(); 
+                        alert("Producto eliminado con éxito.");
+                    } else {
+                        const error = await response.text();
+                        alert(`Error al eliminar el producto (${response.status}): ${error}`);
+                    }
+                } catch (error) {
+                    console.error("Error de red al eliminar:", error);
+                }
+            }
+        }
+    });
+
+    // Inicializar tabla
+    loadProducts();
+});
+</script>
+
+{% endblock content %}

@@ -32,6 +32,9 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'pos',
     'inventario',
+    'pedido',
+    'landing',
+    'reportes',
     'analytics',
 ]
 
@@ -59,6 +62,11 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # Registrar templatetags comunes como builtins evita tener que
+            # hacer {% load currency %} en cada plantilla.
+            'builtins': [
+                'pos.templatetags.currency',
+            ],
         },
     },
 ]
@@ -72,7 +80,7 @@ WSGI_APPLICATION = 'forneria.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'forneria',
+        'NAME': 'forneria_github',
         'USER': 'root',
         'PASSWORD': '',  
         'HOST': '127.0.0.1',
@@ -127,10 +135,26 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# Añadir carpeta externa de imágenes del landing si existe (no obligatorio copiar archivos).
+# Esto permite servir las imágenes desde `c:\Users\maeva\OneDrive\Documentos\GitHub\landing_forneria\images`
+# durante desarrollo sin mover los ficheros al proyecto.
+EXTERNAL_LANDING_IMAGES = r"C:\Users\maeva\OneDrive\Documentos\GitHub\landing_forneria\images"
+if os.path.isdir(EXTERNAL_LANDING_IMAGES):
+    STATICFILES_DIRS.append(EXTERNAL_LANDING_IMAGES)
+
+# Agregar todo el directorio del landing como posible fuente de estáticos (contiene styles.css y otros recursos)
+EXTERNAL_LANDING_DIR = r"C:\Users\maeva\OneDrive\Documentos\GitHub\landing_forneria"
+if os.path.isdir(EXTERNAL_LANDING_DIR):
+    STATICFILES_DIRS.append(EXTERNAL_LANDING_DIR)
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# URL a la que redirigir tras login si no hay 'next' en la petición
+LOGIN_REDIRECT_URL = '/pos/sistema/'
+LOGIN_URL = '/accounts/login/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

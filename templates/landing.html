@@ -1,0 +1,147 @@
+{% extends 'base_landing.html' %}
+{% load static %}
+
+{% block content %}
+
+  <header class="header">
+    <nav class="nav container">
+      <div class="logo">
+        <img src="{% static 'images/fornerialogo.png' %}" alt="Fornería Logo" class="logo-img">
+      </div>
+      <input type="checkbox" id="menu-toggle" class="menu-toggle">
+      <label for="menu-toggle" class="nav-toggle">☰</label>
+      <ul class="nav-menu">
+        <li><a href="#inicio">Inicio</a></li>
+        <li><a href="#nosotros">Nosotros</a></li>
+        <li><a href="#caracteristicas">Nuestros Productos</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section id="inicio" class="hero">
+    <div class="container">
+      <h1 class="hero-title">La Fornería – Tienda de especialidad.</h1>
+      <p class="hero-subtitle">Honramos nuestras raíces italianas y la cultura del buen comer.</p>
+      <a href="#contacto" class="btn btn-primary">Ven a visitarnos</a>
+    </div>
+  </section>
+
+  <section id="nosotros" class="nosotros">
+    <div class="container">
+      <h2 class="section-title">Nosotros</h2>
+      <div class="nosotros-grid">
+        <div class="nosotros-card">
+          <h3>Nuestra Misión</h3>
+          <p>"Abastecer a las familias con productos gastronómicos de alta calidad, saludables y sabrosos, ofreciendo una experiencia única basada en la tradición artesanal y el respeto por las distintas necesidades alimentarias, a través de una atención cercana, cálida y comprometida."</p>
+        </div>
+        <div class="nosotros-card">
+          <h3>Nuestra Visión</h3>
+          <p>"Consolidarse como una marca reconocida por la excelencia de los productos y servicios, expandiendo las capacidades de producción y comercialización, para llevar el sabor y la esencia de La Fornería a nuevos mercados y hogares, manteniendo siempre la esencia artesanal y gourmet"</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="caracteristicas" class="features">
+    <div class="container">
+      <h2 class="section-title">Nuestras Características</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>Recién Horneado</h3>
+          <p>Pan fresco todos los días</p>
+        </div>
+        <div class="feature-card">
+          <h3>Ingredientes Naturales</h3>
+          <p>Solo los mejores ingredientes</p>
+        </div>
+        <div class="feature-card">
+          <h3>Artesanal</h3>
+          <p>Elaborado con maestría tradicional</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="productos" class="productos">
+    <div class="container">
+      <h2 class="section-title">Productos Destacados</h2>
+      <div class="productos-grid">
+        {% if productos %}
+          {% for p in productos|slice:":6" %}
+            <div class="producto-card">
+              <img src="{% static p.imagen %}" alt="{{ p.nombre }}" class="producto-img">
+              <h3>{{ p.nombre }}</h3>
+              {% if p.descripcion %}
+                <p>{{ p.descripcion }}</p>
+              {% else %}
+                {% if p.precio %}
+                  <p>{{ p.precio|floatformat:0 }} CLP</p>
+                {% else %}
+                  {% if p.categoria %}
+                    <p>{{ p.categoria.nombre }}</p>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No hay productos disponibles por ahora.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="productos">
+    <div class="container">
+      <h2 class="section-title">Congelados</h2>
+      <div class="productos-grid">
+        {% if productos %}
+          {% for p in productos %}
+            {% if p.categoria and p.categoria.nombre == 'Congelados' %}
+              <div class="producto-card">
+                <img src="{% static p.imagen %}" alt="{{ p.nombre }}" class="producto-img">
+                <h3>{{ p.nombre }}</h3>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <p>No hay productos disponibles.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section id="contacto" class="contacto">
+    <div class="container">
+      <h2 class="section-title">Contacto</h2>
+      <div class="contacto-container">
+        <div class="contacto-imagen">
+          <img src="{% static 'images/portada.png' %}" alt="Portada La Fornería" class="portada-img">
+        </div>
+        <div class="contacto-info">
+          <div class="contacto-card">
+            <h3>Información</h3>
+            <p>La Fornería – Tienda de especialidad</p>
+            <p> Los Arrayanes #901, La Serena</p>
+          </div>
+          <div class="contacto-card">
+            <h3>Horario de atención</h3>
+            <p>Lunes a Viernes: 8:00 - 20:00</p>
+            <p>Sábado y Domingo: 9:00 - 20:00</p>
+          </div>
+        </div>
+      </div>
+      <div class="contacto-social">
+        <a href="https://www.instagram.com/laforneriaemporio/" target="_blank" rel="noopener noreferrer" class="btn btn-instagram">Síguenos en Instagram</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>2025 Easy Design. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+{% endblock %}

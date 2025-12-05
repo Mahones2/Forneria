@@ -1,0 +1,40 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+{% load currency %}
+
+{% block content %}
+<div class="container" style="padding:2rem;">
+  <h2>Inventario</h2>
+  <p>Productos y stock</p>
+  <div style="margin-bottom:12px;">
+    <a class="button1" href="{% url 'producto_create' %}">Crear producto</a>
+  </div>
+
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Categoría</th>
+        <th>Precio</th>
+        <th>Stock total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td>
+          {{ p.nombre }}<br>
+          <a href="{% url 'producto_edit' p.id %}">Editar</a>
+          | <a href="{% url 'producto_delete' p.id %}">Eliminar</a>
+        </td>
+        <td>{{ p.categoria.nombre }}</td>
+        <td>{{ p.precio_venta|clp }}</td>
+        <td>{{ p.stock_total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No hay productos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

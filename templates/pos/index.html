@@ -1,0 +1,168 @@
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fornería - Panadería artesanal">
+    <title>Fornería</title>
+    <link rel="stylesheet" href="{% static 'css/styleslanding.css' %}?v=3">
+</head>
+<body>
+
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">
+                <img src="{% static 'images/fornerialogo.png' %}" alt="Fornería Logo" class="logo-img">
+            </div>
+            <input type="checkbox" id="menu-toggle" class="menu-toggle">
+            <label for="menu-toggle" class="nav-toggle">☰</label>
+            <ul class="nav-menu">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#nosotros">Nosotros</a></li>
+                <li><a href="#caracteristicas">Nuestros Productos</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="inicio" class="hero">
+        <div class="container">
+            <h1 class="hero-title">La Fornería – Tienda de especialidad.</h1>
+            <p class="hero-subtitle">Honramos nuestras raíces italianas y la cultura del buen comer.</p>
+            <a href="#contacto" class="btn btn-primary">Ven a visitarnos</a>
+        </div>
+    </section>
+
+    <section id="nosotros" class="nosotros">
+        <div class="container">
+            <h2 class="section-title">Nosotros</h2>
+            <div class="nosotros-grid">
+                <div class="nosotros-card">
+                    <h3>Nuestra Misión</h3>
+                    <p>"Abastecer a las familias con productos gastronómicos de alta calidad, saludables y sabrosos, ofreciendo una experiencia única basada en la tradición artesanal y el respeto por las distintas necesidades alimentarias, a través de una atención cercana, cálida y comprometida."</p>
+                </div>
+                <div class="nosotros-card">
+                    <h3>Nuestra Visión</h3>
+                    <p>"Consolidarse como una marca reconocida por la excelencia de los productos y servicios, expandiendo las capacidades de producción y comercialización, para llevar el sabor y la esencia de La Fornería a nuevos mercados y hogares, manteniendo siempre la esencia artesanal y gourmet"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="caracteristicas" class="features">
+        <div class="container">
+            <h2 class="section-title">Nuestras Características</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Recién Horneado</h3>
+                    <p>Pan fresco todos los días</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Ingredientes Naturales</h3>
+                    <p>Solo los mejores ingredientes</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Artesanal</h3>
+                    <p>Elaborado con maestría tradicional</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="productos" class="productos">
+        <div class="container">
+            <h2 class="section-title">Productos Destacados</h2>
+            <div class="productos-grid">
+                <div class="producto-card">
+                    <img src="{% static 'images/ensalada.jpg' %}" alt="Ensalada" class="producto-img">
+                    <h3>Bowl Ensalada</h3>
+                    <p>Mix de hojas frescas con aderezo especial.</p>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/panini.jpg' %}" alt="Panini" class="producto-img">
+                    <h3>Panini Artesanal</h3>
+                    <p>Pan italiano tradicional.</p>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/ciabata.jpg' %}" alt="Ciabata" class="producto-img">
+                    <h3>Ciabata</h3>
+                    <p>Pan rústico italiano.</p>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/integral.jpg' %}" alt="Pan Integral" class="producto-img">
+                    <h3>Pan Integral</h3>
+                    <p>Rico en fibra, elaborado con granos enteros y semillas.</p>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/masa_madre.jpg' %}" alt="Pan de Masa Madre" class="producto-img">
+                    <h3>Pan de Masa Madre</h3>
+                    <p>Fermentación natural de 24 horas para un sabor único.</p>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/canela.jpg' %}" alt="Rollos de Canela" class="producto-img">
+                    <h3>Rollos de Canela</h3>
+                    <p>Pan dulce glaseado con azucar de canela.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="productos" class="productos">
+        <div class="container">
+            <h2 class="section-title">Congelados</h2>
+            <div class="productos-grid">
+                <div class="producto-card">
+                    <img src="{% static 'images/lasagna.jpg' %}" alt="Lasagna" class="producto-img">
+                    <h3>Lasagnas Caseras</h3>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/pasta.jpg' %}" alt="Pastas italianas" class="producto-img">
+                    <h3>Pastas italianas</h3>
+                </div>
+                <div class="producto-card">
+                    <img src="{% static 'images/pescado.jpg' %}" alt="Pescados y Mariscos" class="producto-img">
+                    <h3>Pescados y Mariscos</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacto" class="contacto">
+        <div class="container">
+            <h2 class="section-title">Contacto</h2>
+            <div class="contacto-container">
+                <div class="contacto-imagen">
+                    <img src="{% static 'images/portada.png' %}" alt="Portada La Fornería" class="portada-img">
+                </div>
+                <div class="contacto-info">
+                    <div class="contacto-card">
+                        <h3>Información</h3>
+                        <p>La Fornería – Tienda de especialidad</p>
+                        <p> Los Arrayanes #901, La Serena</p>
+                    </div>
+                    <div class="contacto-card">
+                        <h3>Horario de atención</h3>
+                        <p>Lunes a Viernes: 8:00 - 20:00</p>
+                        <p>Sábado y Domingo: 9:00 - 20:00</p>
+                    </div>
+                </div>
+            </div>
+            <div class="contacto-social">
+                <a href="https://www.instagram.com/laforneriaemporio/" target="_blank" rel="noopener noreferrer" class="btn btn-instagram">
+                    Síguenos en Instagram
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>2025 Easy Design. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding:2rem; max-width:700px;">
+  {% if deleted %}
+    <div style="padding:12px; background:#fff0f0; border:1px solid #f0b9b9;">Producto eliminado.</div>
+    <a class="button1" href="{% url 'inventario' %}">Volver al inventario</a>
+  {% else %}
+    <h2>Eliminar producto: {{ producto.nombre }}</h2>
+    <p>¿Estás seguro que deseas eliminar este producto?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="button1" type="submit">Eliminar</button>
+      <a class="btn-secondary" href="{% url 'inventario' %}">Cancelar</a>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

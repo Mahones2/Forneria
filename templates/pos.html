@@ -1,50 +1,43 @@
-{% extends "index.html" %}
-{% load static %}
+{% extends "pos/basepos.html" %}
+{% load static currency %}
 
 {% block content  %}
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-<!-- Estilos específicos para POS -->
-<link rel="stylesheet" href="{% static 'css/pos.css' %}">
+<!-- Estilos específicos para POS (cache-bust: v3) -->
+<link rel="stylesheet" href="{% static 'css/pos.css' %}?v=3">
 <div class="center">
-    <h1 style="font-size: 2rem; color:#fff; margin-top: 0;">Punto de venta</h1>
+    <header class="pos-header" style="margin-bottom:0.6rem;">
+        <h1 style="font-size: 1.8rem; color:#222; margin:0 0 8px 0;">Punto de venta</h1>
 
-    <!-- Opciones de búsqueda y filtro -->
-    <div class="containeropciones">
-        <div class="search">
-            <form action="" method="GET">
-                <input type="text" placeholder="Nombre o Código" name="buscar">
-                <button type="submit" class="btn-search">
-                    <i class="fas fa-search"></i> Buscar
-                </button>
-                <button type="button" class="btn-scan">
-                    <i class="fas fa-barcode"></i> Escanear
-                </button>
+        <!-- Opciones de búsqueda y filtro -->
+        <div class="containeropciones" style="display:flex; gap:10px; align-items:center;">
+            <form action="" method="GET" style="display:flex; gap:8px; align-items:center; flex:1;">
+                <input name="buscar" type="text" placeholder="Nombre o Código" style="padding:8px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); width:320px;" value="{{ request.GET.buscar|default:'' }}">
+                <button type="submit" class="button1" style="padding:8px 12px;">Buscar</button>
+                <button type="button" class="btn-secondary" onclick="alert('Función de escaneo no implementada aún')">Escanear</button>
+                <div style="margin-left:auto;">
+                    <select name="categorias" id="categorias" onchange="this.form.submit()" style="padding:8px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.06);">
+                        <option value="">Todas las categorías</option>
+                        {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" {% if request.GET.categorias == categoria.id|stringformat:"s" %}selected{% endif %}>{{ categoria.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </form>
         </div>
-
-        <!-- Filtro dinámico de categorías -->
-        <div class="filter">
-            <select name="categorias" id="categorias" onchange="this.form.submit()">
-                <option value="" disabled selected>Seleccionar categoría</option>
-                {% for categoria in categorias %}
-                    <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+    </header>
 
     <!-- Tarjetas de productos -->
     <div class="containercartas">
         {% for producto in page_obj %}
-            <div class="card" data-id="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio|floatformat:0 }}">
+            <div class="card" data-id="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio_venta|floatformat:0 }}">
                 <div class="w3-container w3-center">
                     <h2>{{ producto.nombre }}</h2>
-                    <p>Código de barra: {{ producto.codigo_barra }}</p>
-                    <p>Stock disponible: <strong>{{ producto.stock_total }}</strong></p>
-                        <p>Precio: <strong>${{ producto.precio|floatformat:0 }}</strong></p>
+                    <p style="font-size:0.85rem; color:#666;">Código de barra: {{ producto.codigo_barra|default:'N/A' }}</p>
+                    <p style="font-size:0.9rem;">Stock disponible: <strong>{{ producto.stock_total }}</strong></p>
+                    <p style="margin-top:6px;">Precio: <span class="precio">{{ producto.precio_venta|floatformat:0|clp }}</span></p>
                     <div class="card-actions">
-                            <button class="button1 add-to-cart" data-id="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio|floatformat:0 }}">Agregar al carrito</button>
-                        <button class="button1 view-detail" data-id="{{ producto.id }}">Ver detalle</button>
+                        <button class="button1 add-to-cart" data-id="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio_venta|floatformat:0 }}">Agregar al carrito</button>
+                        <button class="btn-secondary view-detail" data-id="{{ producto.id }}">Ver detalle</button>
                     </div>
                 </div>
             </div>
@@ -107,7 +100,8 @@
     <div class="modal-content">
         <span id="cart-modal-close" class="modal-close">&times;</span>
         <h2>Resumen de la venta</h2>
-        <div id="cart-modal-items">
+        <div class="sale-meta">Fecha y hora:<strong id="cart-datetime"> -</strong></div>
+        <div id="cart-modal-items" class="cart-modal-items">
             <!-- items dinámicos -->
         </div>
         <hr>
@@ -119,12 +113,21 @@
         <input id="monto-pagado" type="number" step="1" min="0" />
         <p>Vuelto: <strong id="cart-change">$0</strong></p>
 
-        <div style="margin-top:1rem;">
-            <button id="confirm-sale" class="button1">Confirmar venta (simulación)</button>
-            <button id="cancel-sale" class="button1">Cancelar</button>
+        <div style="margin-top:0.6rem;">
+            <label for="metodo-pago">Método de pago:</label>
+            <select id="metodo-pago" style="margin-left:8px; padding:6px 8px; border-radius:6px;">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta_debito">Tarjeta débito</option>
+                <option value="tarjeta_credito">Tarjeta crédito</option>
+            </select>
+        </div>
+
+        <div style="margin-top:1rem; display:flex; gap:0.6rem; justify-content:flex-end;">
+            <button id="cancel-sale" class="btn-outline">Cancelar</button>
+            <button id="confirm-sale" class="btn-primary">Confirmar venta (simulación)</button>
         </div>
     </div>
 </div>
 
-<script src="{% static 'js/pos.js' %}"></script>
+<script src="{% static 'js/pos.js' %}?v=3"></script>
 {% endblock %}

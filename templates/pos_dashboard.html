@@ -1,0 +1,103 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+{% load currency %}
+
+{% block content %}
+<div class="container" style="padding:2rem;">
+  <h2>Dashboard de Ventas</h2>
+  <p>Totales por día (últimos 60 días) y por mes</p>
+
+  <!-- KPI cards -->
+  <div class="kpi-container" style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.4rem;">
+  <a href="{% url 'ventas' %}" class="kpi-card" title="Ver listado de ventas">
+      <div class="kpi-title">Ingresos (30d)</div>
+      <div class="kpi-value">{{ kpis.total_ingresos_30|clp }}</div>
+      <div class="kpi-sub">Ventas: {{ kpis.total_ventas_30 }}</div>
+    </a>
+
+  <a href="{% url 'ventas' %}" class="kpi-card" title="Ventas hoy">
+      <div class="kpi-title">Ventas hoy</div>
+      <div class="kpi-value">{{ kpis.ventas_hoy }}</div>
+      <div class="kpi-sub">Promedio (30d): {{ kpis.promedio_venta_30|clp }}</div>
+    </a>
+
+  <a href="{% url 'inventario' %}" class="kpi-card" title="Ver inventario">
+      <div class="kpi-title">Inventario</div>
+      <div class="kpi-value">Ver productos</div>
+      <div class="kpi-sub">Ir a inventario</div>
+    </a>
+
+  <a href="{% url 'clientes' %}" class="kpi-card" title="Ver clientes">
+      <div class="kpi-title">Clientes</div>
+      <div class="kpi-value">Ver clientes</div>
+      <div class="kpi-sub">Ir a clientes</div>
+    </a>
+  </div>
+
+  <div style="max-width:900px; margin-bottom:2rem;">
+    <canvas id="chart-dias" height="120"></canvas>
+  </div>
+
+  <div style="max-width:900px; margin-bottom:2rem;">
+    <canvas id="chart-meses" height="80"></canvas>
+  </div>
+
+  <p>Fuente: datos del modelo `Venta`</p>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const dias = {{ dias|safe }};
+const meses = {{ meses|safe }};
+
+function mkLabelsAndData(list, key) {
+  const labels = list.map(x => x[key]);
+  const data = list.map(x => x.total);
+  return { labels, data };
+}
+
+// Dias
+const dd = mkLabelsAndData(dias, 'dia');
+const ctx = document.getElementById('chart-dias').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dd.labels,
+    datasets: [{ 
+      label: 'Total diario (CLP)', 
+      data: dd.data, 
+      borderColor: '#2d6cdf', 
+      backgroundColor: 'rgba(45,108,223,0.08)', 
+      tension: 0.2,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }]
+  },
+  options: { 
+    scales: { 
+      x: { 
+        ticks: { maxRotation: 45, minRotation: 45 }
+      },
+      y: {
+        beginAtZero: true
+      }
+    }, 
+    plugins: { 
+      legend: { display: false } 
+    },
+    maintainAspectRatio: true
+  }
+});
+
+// Meses
+const dm = mkLabelsAndData(meses, 'mes');
+const ctxm = document.getElementById('chart-meses').getContext('2d');
+new Chart(ctxm, {
+  type: 'bar',
+  data: { labels: dm.labels, datasets: [{ label: 'Total mensual (CLP)', data: dm.data, backgroundColor: '#2d6cdf' }] },
+  options: { plugins: { legend: { display: false } } }
+});
+</script>
+
+{% endblock %}
