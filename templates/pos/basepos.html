@@ -15,6 +15,27 @@
         /* Botón flotante para acceso rápido al POS */
         .pos-floating-btn { position: fixed; right: 22px; bottom: 22px; z-index: 9999; background:#2d6cdf; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.12); text-decoration:none; font-weight:600; }
         .pos-floating-btn:hover { opacity:0.95; }
+
+        /* Estilos para dropdown en sidebar vertical */
+        .nav-item.dropdown .dropdown-menu {
+            position: static !important;
+            transform: none !important;
+            margin-left: 1rem;
+            margin-top: 0.25rem;
+            background-color: #343a40;
+            border: none;
+        }
+        .nav-item.dropdown .dropdown-item {
+            color: #adb5bd;
+            padding: 0.5rem 1rem;
+        }
+        .nav-item.dropdown .dropdown-item:hover {
+            background-color: #495057;
+            color: #fff;
+        }
+        .nav-item.dropdown .dropdown-divider {
+            border-color: #495057;
+        }
     </style>
 </head>
 <body>
@@ -30,9 +51,17 @@
                 <ul class="nav flex-column px-3 flex-grow-1">
                     {% if user.is_authenticated %}
                         {% if user|in_group:"Administrador" or user.is_superuser %}
-                            <li class="nav-item"><a class="nav-link text-white" href="{% url 'dashboard' %}">Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link text-white" href="{% url 'analytics:dashboard-finanzas' %}">Dashboard Finanzas</a></li>
-                            <li class="nav-item"><a class="nav-link text-white" href="{% url 'inventario:dashboard-inventario' %}">Dashboard Inventario</a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdownDashboard" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Dashboard
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownDashboard">
+                                    <li><a class="dropdown-item" href="{% url 'dashboard' %}">General</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'analytics:dashboard-finanzas' %}">Finanzas</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'inventario:dashboard-inventario' %}">Inventario</a></li>
+                                </ul>
+                            </li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'ventas' %}">Ventas</a></li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'inventario' %}">Inventario</a></li>
                             <li class="nav-item"><a class="nav-link text-white" href="{% url 'pedidos' %}">Pedidos</a></li>

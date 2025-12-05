@@ -53,7 +53,7 @@ class InventarioMetrics:
         )
 
         valor_inventario = sum(
-            (p.stock_total or 0) * float(p.precio or 0)
+            (p.stock_total or 0) * float(p.precio_venta or 0)
             for p in productos_con_stock
         )
 
@@ -135,7 +135,7 @@ class InventarioMetrics:
                 'fecha_caducidad': lote.fecha_caducidad.isoformat(),
                 'dias_restantes': dias_restantes,
                 'stock_actual': lote.stock_actual,
-                'valor_riesgo': round(lote.stock_actual * float(lote.producto.precio or 0), 2),
+                'valor_riesgo': round(lote.stock_actual * float(lote.producto.precio_venta or 0), 2),
             })
 
         return resultado
@@ -155,7 +155,7 @@ class InventarioMetrics:
         total_valor_perdido = 0
 
         for lote in lotes_vencidos:
-            valor_perdido = lote.stock_actual * float(lote.producto.precio or 0)
+            valor_perdido = lote.stock_actual * float(lote.producto.precio_venta or 0)
             total_valor_perdido += valor_perdido
 
             resultado.append({
@@ -338,7 +338,7 @@ class InventarioMetrics:
             )
 
             valor = sum(
-                (p.stock_total or 0) * float(p.precio or 0)
+                (p.stock_total or 0) * float(p.precio_venta or 0)
                 for p in productos
             )
 
@@ -492,7 +492,7 @@ class InventarioMetrics:
             )
 
             precio_cat = sum(
-                (p.stock_total or 0) * float(p.precio or 0)
+                (p.stock_total or 0) * float(p.precio_venta or 0)
                 for p in productos
             )
 
