@@ -1,0 +1,679 @@
+{% extends 'pos/basepos.html' %}
+{% load static %}
+
+{% block content %}
+<div class="py-4">
+    <!-- Header con filtros y botones de acción -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">Dashboard de Inventario</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <small class="text-muted me-2">Última actualización: <span id="ultimo-update">{{ fecha_actual }}</span></small>
+            <button class="btn btn-sm btn-primary" id="btn-refresh" title="Actualizar datos">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Alertas Automáticas -->
+    {% if alertas_dashboard %}
+    <div id="alertas-container" class="mb-4">
+        {% for alerta in alertas_dashboard %}
+        <div class="alert alert-{{ alerta.tipo }} alert-dismissible fade show" role="alert">
+            <strong>{{ alerta.titulo }}:</strong> {{ alerta.mensaje }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filtros de Fecha -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filtro-fechas" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" name="fecha_inicio" id="fecha_inicio" value="{{ fecha_inicio }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" name="fecha_fin" id="fecha_fin" value="{{ fecha_fin }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Aplicar Filtros</button>
+                    <button type="button" class="btn btn-secondary" id="btn-reset-filtros">Resetear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap Tabs: Métricas vs Análisis -->
+    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="metricas-tab" data-bs-toggle="tab" data-bs-target="#metricas-content" type="button">
+                <i class="bi bi-graph-up"></i> Métricas y KPIs
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="graficos-tab" data-bs-toggle="tab" data-bs-target="#graficos-content" type="button">
+                <i class="bi bi-bar-chart-line"></i> Gráficos y Análisis
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="dashboardTabsContent">
+        <!-- ===================== TAB 1: MÉTRICAS Y KPIs ===================== -->
+        <div class="tab-pane fade show active" id="metricas-content" role="tabpanel">
+
+            <!-- KPIs Principales -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Total Productos</h6>
+                            <h3 class="card-title mb-1">{{ kpis.total_productos }}</h3>
+                            <small class="text-muted">{{ kpis.total_lotes }} lotes activos</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Stock Total</h6>
+                            <h3 class="card-title mb-1">{{ kpis.stock_total_unidades|floatformat:0 }}</h3>
+                            <small class="text-muted">unidades</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Valor Inventario</h6>
+                            <h3 class="card-title mb-1">${{ kpis.valor_inventario|floatformat:0 }}</h3>
+                            <small class="text-muted">Precio de venta</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Utilidad Potencial</h6>
+                            <h3 class="card-title mb-1 {% if kpis.utilidad_potencial >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ${{ kpis.utilidad_potencial|floatformat:0 }}
+                            </h3>
+                            <small class="text-muted">Valor - Costo</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas de Stock -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-white-50">Productos Bajo Stock</h6>
+                            <h3 class="card-title mb-1">{{ kpis.productos_bajo_stock }}</h3>
+                            <small class="text-white-50">Requieren reposición</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-dark-50">Insumos Bajo Stock</h6>
+                            <h3 class="card-title mb-1">{{ kpis.insumos_bajo_stock }}</h3>
+                            <small class="text-dark-50">Necesitan compra</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-white-50">Órdenes Pendientes</h6>
+                            <h3 class="card-title mb-1">{{ ordenes_pendientes.cantidad_ordenes }}</h3>
+                            <small class="text-white-50">${{ ordenes_pendientes.total_pendiente|floatformat:0 }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rotación de Inventario -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-arrow-repeat"></i> Rotación de Inventario</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Rotación Anual</p>
+                                    <h4>{{ rotacion.rotacion_anual|floatformat:2 }}</h4>
+                                    <small class="text-muted">veces/año</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Días de Inventario</p>
+                                    <h4>{{ rotacion.dias_inventario|floatformat:0 }}</h4>
+                                    <small class="text-muted">días promedio</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Costo de Ventas</p>
+                                    <h4>${{ rotacion.costo_ventas|floatformat:0 }}</h4>
+                                </div>
+                                <div class="col-md-3">
+                                    <p class="mb-1 text-muted">Inventario Promedio</p>
+                                    <h4>${{ rotacion.inventario_promedio|floatformat:0 }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos con Stock Bajo -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Productos con Stock Bajo</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if productos_bajo_stock %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Categoría</th>
+                                                <th>Lote</th>
+                                                <th class="text-end">Stock Actual</th>
+                                                <th class="text-end">Stock Mínimo</th>
+                                                <th class="text-end">Faltante</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for producto in productos_bajo_stock %}
+                                            <tr>
+                                                <td><strong>{{ producto.producto_nombre }}</strong></td>
+                                                <td><span class="badge bg-secondary">{{ producto.categoria }}</span></td>
+                                                <td>{{ producto.numero_lote }}</td>
+                                                <td class="text-end text-danger"><strong>{{ producto.stock_actual }}</strong></td>
+                                                <td class="text-end">{{ producto.stock_minimo }}</td>
+                                                <td class="text-end text-warning">{{ producto.diferencia }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No hay productos con stock bajo</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos Próximos a Vencer -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">Productos Próximos a Vencer (7 días)</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if productos_vencer %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Lote</th>
+                                                <th>Fecha Caducidad</th>
+                                                <th class="text-end">Días Restantes</th>
+                                                <th class="text-end">Stock</th>
+                                                <th class="text-end">Valor en Riesgo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for producto in productos_vencer %}
+                                            <tr>
+                                                <td><strong>{{ producto.producto_nombre }}</strong></td>
+                                                <td>{{ producto.numero_lote }}</td>
+                                                <td>{{ producto.fecha_caducidad }}</td>
+                                                <td class="text-end">
+                                                    <span class="badge {% if producto.dias_restantes <= 3 %}bg-danger{% else %}bg-warning{% endif %}">
+                                                        {{ producto.dias_restantes }} días
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">{{ producto.stock_actual }}</td>
+                                                <td class="text-end text-danger">${{ producto.valor_riesgo|floatformat:0 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No hay productos próximos a vencer</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos Vencidos -->
+            {% if productos_vencidos.cantidad_lotes > 0 %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">Productos Vencidos - Valor Perdido: ${{ productos_vencidos.total_valor_perdido|floatformat:0 }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Lote</th>
+                                            <th>Fecha Caducidad</th>
+                                            <th class="text-end">Días Vencido</th>
+                                            <th class="text-end">Stock</th>
+                                            <th class="text-end">Valor Perdido</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for producto in productos_vencidos.productos %}
+                                        <tr>
+                                            <td><strong>{{ producto.producto_nombre }}</strong></td>
+                                            <td>{{ producto.numero_lote }}</td>
+                                            <td>{{ producto.fecha_caducidad }}</td>
+                                            <td class="text-end text-danger">{{ producto.dias_vencido }} días</td>
+                                            <td class="text-end">{{ producto.stock_actual }}</td>
+                                            <td class="text-end text-danger"><strong>${{ producto.valor_perdido|floatformat:0 }}</strong></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Insumos con Stock Bajo -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Insumos con Stock Bajo</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if insumos_bajo %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Insumo</th>
+                                                <th>Proveedor</th>
+                                                <th>Unidad</th>
+                                                <th class="text-end">Stock Actual</th>
+                                                <th class="text-end">Stock Mínimo</th>
+                                                <th class="text-end">Faltante</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for insumo in insumos_bajo %}
+                                            <tr>
+                                                <td><strong>{{ insumo.nombre }}</strong></td>
+                                                <td>{{ insumo.proveedor }}</td>
+                                                <td>{{ insumo.unidad_medida }}</td>
+                                                <td class="text-end text-danger"><strong>{{ insumo.stock_actual|floatformat:2 }}</strong></td>
+                                                <td class="text-end">{{ insumo.stock_minimo|floatformat:2 }}</td>
+                                                <td class="text-end text-warning">{{ insumo.diferencia|floatformat:2 }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No hay insumos con stock bajo</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===================== TAB 2: GRÁFICOS Y ANÁLISIS ===================== -->
+        <div class="tab-pane fade" id="graficos-content" role="tabpanel">
+
+            <!-- Movimientos de Inventario -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Movimientos de Inventario (Entradas vs Salidas)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="movimientosChart" height="80"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos de Distribución -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Stock por Categoría</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="stockCategoriaChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Compras por Proveedor</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="comprasProveedorChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valorización por Categoría -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Valorización por Categoría</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Categoría</th>
+                                            <th class="text-end">Costo Total</th>
+                                            <th class="text-end">Precio Venta</th>
+                                            <th class="text-end">Utilidad Potencial</th>
+                                            <th class="text-end">Margen %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cat in valorizacion.categorias %}
+                                        <tr>
+                                            <td><strong>{{ cat.categoria }}</strong></td>
+                                            <td class="text-end">${{ cat.costo|floatformat:0 }}</td>
+                                            <td class="text-end">${{ cat.precio_venta|floatformat:0 }}</td>
+                                            <td class="text-end {% if cat.utilidad_potencial >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                <strong>${{ cat.utilidad_potencial|floatformat:0 }}</strong>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="badge {% if cat.margen_pct >= 50 %}bg-success{% elif cat.margen_pct >= 30 %}bg-primary{% else %}bg-warning{% endif %}">
+                                                    {{ cat.margen_pct }}%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        <tr class="table-active">
+                                            <td><strong>TOTAL</strong></td>
+                                            <td class="text-end"><strong>${{ valorizacion.total_costo|floatformat:0 }}</strong></td>
+                                            <td class="text-end"><strong>${{ valorizacion.total_precio|floatformat:0 }}</strong></td>
+                                            <td class="text-end text-success"><strong>${{ valorizacion.total_utilidad_potencial|floatformat:0 }}</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos con Más Movimiento -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Top 10 Productos con Más Movimiento</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if productos_movimiento %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Producto</th>
+                                                <th>Categoría</th>
+                                                <th class="text-end">Total Movimientos</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for producto in productos_movimiento %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td><strong>{{ producto.nombre }}</strong></td>
+                                                <td><span class="badge bg-secondary">{{ producto.categoria }}</span></td>
+                                                <td class="text-end"><strong>{{ producto.total_movimientos }}</strong></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">No hay movimientos en el periodo seleccionado</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js y Bootstrap Icons-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ===================== CONFIGURACIÓN GLOBAL =====================
+const colors = {
+    primary: '#0d6efd',
+    success: '#198754',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#0dcaf0',
+    purple: '#6f42c1',
+    orange: '#fd7e14',
+    teal: '#20c997',
+    pink: '#d63384'
+};
+
+const chartColors = [
+    colors.primary, colors.success, colors.warning, colors.info,
+    colors.purple, colors.orange, colors.teal, colors.pink,
+    colors.danger, '#6c757d'
+];
+
+// ===================== FUNCIONES DE UTILIDAD =====================
+function formatCurrency(value) {
+    return '$' + Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// ===================== ESPERAR A QUE EL DOM ESTÉ LISTO =====================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando dashboard de inventario...');
+
+    // ===================== BOTÓN MANUAL DE REFRESH =====================
+    const btnRefresh = document.getElementById('btn-refresh');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', function() {
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Actualizando...';
+            this.disabled = true;
+            location.reload();
+        });
+    }
+
+    // ===================== FILTROS DE FECHA =====================
+    const filtroFechas = document.getElementById('filtro-fechas');
+    if (filtroFechas) {
+        filtroFechas.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fechaInicio = document.getElementById('fecha_inicio').value;
+            const fechaFin = document.getElementById('fecha_fin').value;
+
+            let url = window.location.pathname;
+            const params = new URLSearchParams();
+            if (fechaInicio) params.append('fecha_inicio', fechaInicio);
+            if (fechaFin) params.append('fecha_fin', fechaFin);
+
+            window.location.href = url + '?' + params.toString();
+        });
+    }
+
+    const btnResetFiltros = document.getElementById('btn-reset-filtros');
+    if (btnResetFiltros) {
+        btnResetFiltros.addEventListener('click', function() {
+            window.location.href = window.location.pathname;
+        });
+    }
+
+    // ===================== DATOS DE DJANGO =====================
+    const movimientos = JSON.parse('{{ movimientos_json|safe }}');
+    const stockCategoria = JSON.parse('{{ stock_categoria_json|safe }}');
+    const comprasProveedor = JSON.parse('{{ compras_proveedor_json|safe }}');
+
+    // ===================== GRÁFICO 1: MOVIMIENTOS DE INVENTARIO =====================
+    if (movimientos.labels && movimientos.labels.length > 0) {
+        const movimientosCtx = document.getElementById('movimientosChart').getContext('2d');
+        new Chart(movimientosCtx, {
+            type: 'line',
+            data: {
+                labels: movimientos.labels,
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: movimientos.entradas,
+                        borderColor: colors.success,
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Salidas',
+                        data: movimientos.salidas,
+                        borderColor: colors.danger,
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: context => context.dataset.label + ': ' + context.parsed.y + ' unidades'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // ===================== GRÁFICO 2: STOCK POR CATEGORÍA =====================
+    if (stockCategoria.labels && stockCategoria.labels.length > 0) {
+        const stockCategoriaCtx = document.getElementById('stockCategoriaChart').getContext('2d');
+        new Chart(stockCategoriaCtx, {
+            type: 'doughnut',
+            data: {
+                labels: stockCategoria.labels,
+                datasets: [{
+                    data: stockCategoria.valores,
+                    backgroundColor: chartColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: context => context.label + ': ' + formatCurrency(context.parsed)
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ===================== GRÁFICO 3: COMPRAS POR PROVEEDOR =====================
+    if (comprasProveedor.labels && comprasProveedor.labels.length > 0) {
+        const comprasProveedorCtx = document.getElementById('comprasProveedorChart').getContext('2d');
+        new Chart(comprasProveedorCtx, {
+            type: 'bar',
+            data: {
+                labels: comprasProveedor.labels,
+                datasets: [{
+                    label: 'Total Compras',
+                    data: comprasProveedor.totales,
+                    backgroundColor: colors.primary,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const idx = context.dataIndex;
+                                return [
+                                    'Total: ' + formatCurrency(context.parsed.y),
+                                    'Órdenes: ' + comprasProveedor.cantidades[idx]
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: value => formatCurrency(value) }
+                    }
+                }
+            }
+        });
+    }
+
+    console.log('Dashboard de inventario cargado correctamente');
+});
+</script>
+
+{% endblock %}

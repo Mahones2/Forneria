@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('pos/', include('pos.urls')),
     path('analytics/', include('analytics.urls')),
+    path('inventario/', include('inventario.urls')),
     path('api/auth/', include('dj_rest_auth.urls')),  # login/logout con JWT
 
     # Esquema OpenAPI
