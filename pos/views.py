@@ -206,11 +206,14 @@ def inicio(request):
         # lista de imágenes disponibles para asignar por rotación si no hay coincidencia exacta
         fallback_images = ['ensalada.jpg','panini.jpg','ciabata.jpg','integral.jpg','masa_madre.jpg','canela.jpg','lasagna.jpg','pasta.jpg','pescado.jpg']
         for idx, p in enumerate(productos_qs):
+            precio_val = float(p.precio_venta) if p.precio_venta is not None else 0
             productos.append({
                 'id': p.id,
                 'nombre': p.nombre,
                 'codigo_barra': p.codigo_barra,
-                'precio': float(p.precio_venta) if p.precio_venta is not None else 0,
+                # Mantener ambos nombres de campo por compatibilidad con templates y JS
+                'precio_venta': precio_val,
+                'precio': precio_val,
                 'stock_total': p.stock_total(),
                 'categoria': p.categoria.id if p.categoria else None,
             })
@@ -323,8 +326,10 @@ def landing(request):
         productos_qs = productos_qs[:24]
 
         categorias = [{'id': c.id, 'nombre': c.nombre} for c in categorias_qs]
+        # imágenes de fallback (nombres presentes en static/images/landing_forneria)
+        fallback_images = ['ensalada.jpg','panini.jpg','ciabata.jpg','integral.jpg','masa_madre.jpg','canela.jpg','lasagna.jpg','pasta.jpg','pescado.jpg']
         productos = []
-        for p in productos_qs:
+        for idx, p in enumerate(productos_qs):
             # Determinar imagen estática disponible para este producto probando varias rutas
             nombre_slug = slugify(p.nombre or '')
             candidates = [
@@ -349,20 +354,22 @@ def landing(request):
                     if finders.find(candidate_path):
                         found = candidate_path
                     else:
-                        found = 'images/PHOTO.jpg'
+                        # usar logo como fallback seguro si falta la imagen PHOTO.jpg
+                        found = 'images/fornerialogo.png'
                 except Exception:
-                    found = 'images/PHOTO.jpg'
+                    found = 'images/fornerialogo.png'
 
-            productos.append({
-                'id': p.id,
-                'nombre': p.nombre,
-                'codigo_barra': p.codigo_barra,
-                'precio': float(p.precio) if p.precio is not None else None,
-                'stock_total': p.stock_total(),
-                # pasar id y nombre de la categoría para permitir enlaces/filtrado en la plantilla
-                'categoria': {'id': p.categoria.id, 'nombre': p.categoria.nombre} if p.categoria else None,
-                'imagen': found,
-            })
+                productos.append({
+                    'id': p.id,
+                    'nombre': p.nombre,
+                    'codigo_barra': p.codigo_barra,
+                    # usar precio_venta del modelo
+                    'precio': float(p.precio_venta) if p.precio_venta is not None else None,
+                    'stock_total': p.stock_total(),
+                    # pasar id y nombre de la categoría para permitir enlaces/filtrado en la plantilla
+                    'categoria': {'id': p.categoria.id, 'nombre': p.categoria.nombre} if p.categoria else None,
+                    'imagen': found,
+                })
 
         # Lista curada (orden y nombres) basada en las imágenes presentes en static/images/landing_forneria
         curated = [
@@ -664,7 +671,12 @@ def checkout(request):
             descuento_linea = (linea_total * desc_pct / Decimal('100')) if desc_pct else Decimal('0')
             subtotal += linea_total
             descuento_total += descuento_linea
-            detalles_to_create.append({'producto_id': pid, 'cantidad': qty, 'precio_unitario': precio, 'descuento_pct': desc_pct})
+            detalles_to_create.append({
+                'producto_id': pid,
+                'cantidad': qty,
+                'precio_unitario': precio,
+                'descuento': descuento_linea
+            })
 
         total_sin_iva = (subtotal - descuento_total).quantize(Decimal('0.01'))
         total_iva = (total_sin_iva * Decimal('0.19')).quantize(Decimal('0.01'))
@@ -697,12 +709,13 @@ def checkout(request):
             # crear detalles
             for d in detalles_to_create:
                 prod = Producto.objects.get(id=d['producto_id'])
+                # DetalleVenta almacena el monto de descuento en el campo `descuento`
                 DetalleVenta.objects.create(
                     venta=venta,
                     producto=prod,
                     cantidad=d['cantidad'],
                     precio_unitario=d['precio_unitario'],
-                    descuento_pct=d['descuento_pct']
+                    descuento=d.get('descuento', Decimal('0'))
                 )
 
             # recalcular y guardar totales por si hay reglas adicionales
@@ -711,9 +724,9 @@ def checkout(request):
             # consumir stock (puede lanzar ValueError si no hay stock suficiente)
             venta.actualizar_stock()
 
-            # asignar folio simple
-            venta.folio = f"V{venta.id:06d}"
-            venta.save(update_fields=['folio'])
+            # asignar folio simple en el campo existente `folio_documento`
+            venta.folio_documento = f"V{venta.id:06d}"
+            venta.save(update_fields=['folio_documento'])
 
             # Registrar pago asociado (si se envía método de pago)
             try:
@@ -726,7 +739,7 @@ def checkout(request):
 
         resp = {
             'id': venta.id,
-            'folio': venta.folio,
+            'folio': venta.folio_documento,
             'total': str(venta.total),
             'vuelto': str(vuelto) if vuelto is not None else None
         }

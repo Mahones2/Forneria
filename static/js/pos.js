@@ -132,6 +132,60 @@ function clearCart() {
 document.addEventListener('DOMContentLoaded', () => {
   renderCart();
 
+  // Inicializar estado del sidebar (colapsado/expandido) y el botón toggle
+  try {
+    const sidebar = document.getElementById('pos-sidebar');
+    const toggle = document.getElementById('sidebar-toggle');
+    if (sidebar && toggle) {
+      // Leer preferencia guardada (siempre guardamos collapsed=true|false)
+      const saved = localStorage.getItem('pos_sidebar_collapsed');
+      const isCollapsed = saved === 'true';
+      if (isCollapsed) sidebar.classList.add('collapsed');
+      toggle.setAttribute('aria-expanded', (!isCollapsed).toString());
+
+      // Click handler: en móvil (<992) abrimos/cierramos el sidebar como 'push' (no overlap)
+      toggle.addEventListener('click', () => {
+        const layout = document.querySelector('.pos-layout');
+        const isMobile = window.innerWidth < 992;
+        if (isMobile) {
+          const opened = layout.classList.toggle('sidebar-open');
+          toggle.setAttribute('aria-expanded', opened.toString());
+          // Guardar la preferencia inversa (collapsed)
+          try { localStorage.setItem('pos_sidebar_collapsed', opened ? 'false' : 'true'); } catch (e) {}
+        } else {
+          const collapsed = sidebar.classList.toggle('collapsed');
+          toggle.setAttribute('aria-expanded', (!collapsed).toString());
+          try { localStorage.setItem('pos_sidebar_collapsed', collapsed ? 'true' : 'false'); } catch (e) {}
+        }
+      });
+
+      // Close button inside sidebar: collapse the sidebar (works both mobile and desktop)
+      const closeBtn = document.getElementById('sidebar-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          const layout = document.querySelector('.pos-layout');
+          layout.classList.remove('sidebar-open');
+          sidebar.classList.add('collapsed');
+          toggle.setAttribute('aria-expanded', 'false');
+          try { localStorage.setItem('pos_sidebar_collapsed', 'true'); } catch (e) {}
+          try { toggle.focus(); } catch (e) {}
+        });
+      }
+
+      // Close on ESC: collapse if sidebar was open as push
+      document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          const layout = document.querySelector('.pos-layout');
+          if (layout && layout.classList.contains('sidebar-open')) {
+            layout.classList.remove('sidebar-open');
+            toggle.setAttribute('aria-expanded', 'false');
+            try { localStorage.setItem('pos_sidebar_collapsed', 'true'); } catch (e) {}
+          }
+        }
+      });
+    }
+  } catch (e) { /* silencioso si falta el DOM */ }
+
   // añadir eventos a botones existentes
     document.querySelectorAll('.add-to-cart').forEach(btn => {
       btn.addEventListener('click', (e) => {

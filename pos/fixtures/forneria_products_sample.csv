@@ -1,0 +1,12 @@
+nombre,descripcion,categoria,precio,stock,costo_unitario,tipo,presentacion,caducidad_days
+Pan Hallulla,Pan clásico hallulla 1 unidad,Panaderia y Pasteleria,1500.00,20,1200.00,Pan,unidad,7
+Pan Integral,Pan integral por pieza,Panaderia y Pasteleria,1700.00,15,1000.00,Pan,pieza,7
+Pan Masa Madre,Pan masa madre artesanal,Panaderia y Pasteleria,2200.00,10,1200.00,Pan,pieza,7
+Rollo Canela,Rollo de canela glaseado,Panaderia y Pasteleria,900.00,30,300.00,Pastel,unidad,5
+Empanada Pino,Empanada de pino al horno,Empanadas,1200.00,50,400.00,Empanada,unidad,3
+Empanada Queso,Empanada de queso,Empanadas,1200.00,40,400.00,Empanada,unidad,3
+Cafe Lavazza,Café de especialidad (taza),Cafe y Bebidas,900.00,999,100.00,Bebida,taza,1
+Pasta Italiana Congelada,Paquete de pasta italiana congelada 400g,Gourmet y Congelados,4990.00,60,2500.00,Pasta,paquete,180
+Pizza Artesanal (congelada),Pizza artesanal lista para hornear,Gourmet y Congelados,6990.00,30,3000.00,Pizza,unidad,90
+Galletas Chocolate,Galletas caseras con chocolate,Panaderia y Pasteleria,1800.00,25,600.00,Galleta,pack,30
+Producto Sin Gluten Ejemplo,Ejemplo sin gluten,Opciones Dietéticas,1900.00,12,900.00,Pan,unidad,7

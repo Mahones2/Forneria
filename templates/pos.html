@@ -4,8 +4,10 @@
 {% block content  %}
 <!-- Estilos específicos para POS (cache-bust: v3) -->
 <link rel="stylesheet" href="{% static 'css/pos.css' %}?v=3">
-<div class="center">
-    <header class="pos-header" style="margin-bottom:0.6rem;">
+<div class="pos-layout">
+    <div class="center">
+    <header class="pos-header" style="margin-bottom:0.6rem; display:flex; align-items:center; gap:12px;">
+        <button id="sidebar-toggle" class="button1" aria-controls="pos-sidebar" aria-expanded="true" style="display:none;">Carrito</button>
         <h1 style="font-size: 1.8rem; color:#222; margin:0 0 8px 0;">Punto de venta</h1>
 
         <!-- Opciones de búsqueda y filtro -->
@@ -62,11 +64,13 @@
             {% endif %}
         </span>
     </div>
-</div>
-
 <!-- Sección lateral derecha -->
-<div class="side">
+    </div>
+
+    <!-- Sección lateral derecha -->
+    <div class="side" id="pos-sidebar" role="complementary">
     <div class="containerusuario">
+        <button id="sidebar-close" class="button1" aria-label="Cerrar carrito" style="display:none; margin-bottom:8px;">Cerrar</button>
         <h5>Usuario:</h5>
     </div>
     

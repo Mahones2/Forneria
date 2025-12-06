@@ -1,6 +1,10 @@
 /* Estilos básicos para la vista POS - refinado */
 body { background: linear-gradient(180deg,var(--bg-start) 0%, var(--bg-end) 100%); color: #333; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-.center { max-width: var(--max-width); margin: 0 auto; padding: 1.2rem 1rem; }
+/* Layout wrapper: contiene centro + sidebar para facilitar el reflujo */
+.pos-layout { max-width: calc(var(--max-width) + 360px); margin: 0 auto; padding: 1.2rem 1rem; }
+.center { max-width: var(--max-width); }
+/* Reservar espacio para la barra lateral fija (evita que se monte sobre el contenido)
+   Nota: ahora la reserva se aplica solo cuando la sidebar está en modo 'lado' (pantallas grandes). */
 /* Grid de tarjetas para mejor alineación */
 .containercartas { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; align-items:start; }
 .card { background: var(--card-bg); border-radius: var(--card-radius); padding: 14px; box-shadow: var(--card-shadow); border: 1px solid var(--border-strong); }
@@ -17,7 +21,24 @@ body { background: linear-gradient(180deg,var(--bg-start) 0%, var(--bg-end) 100%
 
 /* Texto de precio destacado */
 .precio { font-weight:700; color:var(--brand-dark); }
-.side { position: fixed; right: 26px; top: 86px; width: 320px; }
+/* Por defecto la caja lateral será estática para que siga el flujo del documento
+  y pueda colocarse bajo el contenido en pantallas estrechas (móvil). */
+.side { position: static; right: auto; top: auto; width: auto; transition: transform 240ms ease, opacity 240ms ease, height 240ms ease; }
+
+/* collapsed: estado oculto para móviles */
+.side.collapsed { transform: translateY(-6px); opacity: 0; height: 0; overflow: hidden; padding: 0; margin: 0; pointer-events: none; }
+
+/* Cuando la pantalla es bastante más ancha que el contenido centrado,
+   colocar la caja lateral justo al lado del contenedor central en lugar
+   del borde de la ventana para evitar solapamientos. */
+@media (min-width: 992px) {
+  /* En pantallas amplias colocamos .pos-layout en fila: contenido + sidebar */
+  .pos-layout { display:flex; align-items:flex-start; gap:24px; justify-content:center; }
+  .center { flex: 1 1 auto; padding-right: 0; }
+  .side { position: sticky; top: 86px; flex: 0 0 320px; width: 320px; align-self:flex-start; }
+  /* Asegurar que el contenido central no se solape con la sidebar en viewports muy anchos */
+  .pos-layout .center { margin-right: 0; }
+}
 .containercarrito { background: #fff; padding: 12px; border-radius:10px; box-shadow:0 12px 36px rgba(20,20,25,0.06); border:1px solid rgba(0,0,0,0.04); }
 .list-group { list-style:none; padding:6px; margin:0 0 0.6rem 0; max-height:360px; overflow:auto; }
 .list-group li { padding:10px; border-bottom:1px solid rgba(0,0,0,0.04); display:flex; justify-content:space-between; align-items:center; }
@@ -101,8 +122,43 @@ body { background: linear-gradient(180deg,var(--bg-start) 0%, var(--bg-end) 100%
 
 @media (max-width: 900px) {
   .side { position: static; width: auto; margin-top: 1rem; }
+  /* Cuando la sidebar está colapsada dejamos el espacio ocupado por el contenido */
+  .side { transition: transform 200ms ease, opacity 200ms ease; }
   .containercartas { justify-content:center; }
+  /* en pantallas pequeñas, recuperar padding normal */
+  .pos-layout { padding-left: 0.75rem; padding-right: 0.75rem; }
 }
+
+/* Mobile/Tablet behavior: use grid layout and allow sidebar to push content (no overlap)
+   Default on small viewports the sidebar column is collapsed (0 width). When `.sidebar-open`
+   is set on `.pos-layout`, the sidebar column expands to the defined width (320px) and the
+   main content is pushed, so the sidebar never overlays the content. */
+@media (max-width: 991px) {
+  /* Show close button inside sidebar */
+  #sidebar-close { display: inline-block; }
+  /* Show toggle button in the same breakpoint where the sidebar becomes a push-panel */
+  #sidebar-toggle { display: inline-block; }
+
+  /* Make the layout a 2-column grid where second column is collapsed by default */
+  .pos-layout { display: grid; grid-template-columns: 1fr 0px; gap: 0; align-items:start; }
+  .center { grid-column: 1 / 2; }
+  .side { grid-column: 2 / 3; position: relative; width: 320px; overflow: auto; }
+
+  /* When the sidebar-open class is present, allocate space for the sidebar */
+  .pos-layout.sidebar-open { grid-template-columns: 1fr 320px; }
+
+  /* Ensure there is a smooth transition when opening/closing the sidebar */
+  .pos-layout, .side { transition: grid-template-columns 280ms ease, width 280ms ease, transform 240ms ease; }
+
+  /* Improve readability of the cart footer when sidebar is visible */
+  .cart-footer { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.98)); padding-top: 8px; }
+}
+
+/* Estilos del botón toggle (visible solo en móviles) */
+#sidebar-toggle { display:none; padding:6px 10px; border-radius:8px; font-weight:600; }
+
+/* Estado aria-expanded=false visual hint */
+#sidebar-toggle[aria-expanded="false"] { background:#fff; color:var(--brand); box-shadow:0 6px 16px rgba(10,12,20,0.06); }
 
 .kpi-container { display:flex; gap:1rem; }
 .kpi-card { display:block; background:#fff; padding:14px 18px; border-radius:12px; min-width:160px; box-shadow:0 10px 30px rgba(10,12,20,0.06); text-decoration:none; color:inherit; transition:transform 160ms cubic-bezier(.2,.9,.2,1), box-shadow 160ms cubic-bezier(.2,.9,.2,1); }

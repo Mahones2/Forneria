@@ -1,0 +1,38 @@
+nombre,descripcion,categoria,precio,stock,costo_unitario,tipo,presentacion,caducidad_days
+"Sanguchito Caprese","Sánguche caprese con tomate y queso","Sanguchitos",3900,20,2145,unidad,pieza,2
+"Sanguchito Serrano","Sánguche serrano","Sanguchitos",3900,20,2145,unidad,pieza,2
+"Sanguchito El clásico","Sánguche clásico","Sanguchitos",3900,20,2145,unidad,pieza,2
+"Sanguchito Pan con palta","Sánguche con palta","Sanguchitos",3900,20,2145,unidad,pieza,2
+"Sanguchito Pastrami","Sánguche con pastrami","Sanguchitos",4500,15,2475,unidad,pieza,2
+"Sanguchito Lomo Kassler","Sánguche con lomo kassler","Sanguchitos",4500,15,2475,unidad,pieza,2
+"Rollo de canela","Pastelito rollo de canela artesanal","Pastelería",1500,30,825,unidad,pieza,5
+"Milhoja","Pastelito milhoja","Pastelería",2200,25,1210,unidad,pieza,5
+"Maicenito","Pastelito maicenito","Pastelería",1500,30,825,unidad,pieza,5
+"Mendocino","Pastelito mendocino","Pastelería",1500,30,825,unidad,pieza,5
+"Alfajor chocolate","Alfajor de chocolate artesanal","Pastelería",1200,40,660,unidad,pieza,10
+"Cocada chocolate","Cocada con cobertura de chocolate","Pastelería",1200,40,660,unidad,pieza,10
+"Pie de limón","Pie de limón porción","Pastelería",2600,20,1430,unidad,porción,5
+"Pie de maracuyá","Pie de maracuyá porción","Pastelería",2600,20,1430,unidad,porción,5
+"Galletas surtidas","Galletas artesanales surtidas","Galletas y Tartas",900,50,495,unidad,pieza,15
+"Tarta (varias)","Tartas por porción (varias preparaciones)","Galletas y Tartas",2500,20,1375,unidad,porción,7
+"Empanada Pino","Empanada de pino al horno","Empanadas",1800,40,990,unidad,pieza,5
+"Empanada Mechada y queso","Empanada mechada con queso","Empanadas",1900,40,1045,unidad,pieza,5
+"Empanada Hoja queso","Empanada hoja con queso","Empanadas",1800,40,990,unidad,pieza,5
+"Empanada Napolitana","Empanada napolitana","Empanadas",1800,40,990,unidad,pieza,5
+"Empanada Vegetariana","Empanada vegetariana","Empanadas",1800,40,990,unidad,pieza,5
+"Empanada Chaparrita","Empanada chaparrita","Empanadas",1700,40,935,unidad,pieza,5
+"Empanada Chaparrita Napolitana","Empanada chaparrita napolitana","Empanadas",1700,40,935,unidad,pieza,5
+"Café Lavazza","Café de especialidad Lavazza (taza)","Café y Bebidas",900,200,495,unidad,taza,1
+"Infusión / Té","Infusiones naturales y té (taza)","Café y Bebidas",800,200,440,unidad,taza,1
+"Bebida envasada","Bebidas frías envasadas","Café y Bebidas",1200,100,660,unidad,botella,365
+"Pasta italiana congelada","Pasta italiana congelada (pack)","Congelados",7000,50,3850,pack,500g,365
+"Pescados y mariscos congelados","Productos congelados por peso (kg)","Congelados",12000,30,6600,kg,1kg,365
+"Jamón (charcutería)","Jamón - charcutería por 100g","Charcutería",2500,80,1375,unidad,100g,30
+"Salame (charcutería)","Salame - charcutería por 100g","Charcutería",2500,80,1375,unidad,100g,30
+"Queso (charcutería)","Quesos seleccionados por 100g","Charcutería",3000,80,1650,unidad,100g,30
+"Pizza individual","Pizza a la piedra individual","Pizzas",8000,40,4400,unidad,individual,30
+"Panini","Panini (servicio)","Panadería y Sandwiches",3600,30,1980,unidad,pieza,2
+"Pan corriente","Pan corriente (unidad)","Panadería",2200,50,1210,unidad,unidad,3
+"Pan sin gluten","Pan sin gluten (variedad)","Panadería - Opciones especiales",2800,20,1540,unidad,unidad,3
+"Pastelería sin azúcar","Postres sin azúcar añadido","Pastelería - Opciones especiales",1800,20,990,unidad,pieza,5
+"Opciones veganas (varias)","Productos veganos disponibles (varias)","Opciones especiales",1900,20,1045,unidad,pieza,5
