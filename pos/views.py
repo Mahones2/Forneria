@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator # No usada, pero mantenida si se necesita en otras vistas.
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.db.models import Prefetch
 
 # DRF Imports
 from rest_framework import viewsets, permissions, status, generics
@@ -116,33 +117,84 @@ class AlertaViewSet(viewsets.ModelViewSet):
     serializer_class = AlertaSerializer
     permission_classes = [IsAuthenticated]
 
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from django.db.models import ObjectDoesNotExist
+# Asegúrate de que todos los modelos y serializers necesarios estén importados
+# from .models import Cliente, Venta, DetalleVenta 
+# from .serializers import ClienteSerializer, VentaSerializer # Usaremos solo ClienteSerializer y el formato manual
+from decimal import Decimal # Necesario si vas a usar Decimal en la lógica
+
+# Tu ClienteSerializer debería ser:
+# class ClienteSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Cliente
+#         fields = '__all__'
+
+
 class ClienteViewSet(viewsets.ModelViewSet):
+    # La lista por defecto (usada en get_queryset si no hay filtros)
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'rut'
+    permission_classes = [permissions.IsAuthenticated]
     
-    def retrieve(self, request, *args, **kwargs):
+    # Permite buscar, actualizar y eliminar por el campo 'rut' (GET /clientes/{rut}/)
+    lookup_field = 'rut' 
+
+    # ----------------------------------------------------
+    # 1. OPTIMIZACIÓN Y FILTRADO PARA LISTADO (GET /clientes/)
+    # ----------------------------------------------------
+
+    def get_queryset(self):
         """
-        Retorna el cliente con sus ventas asociadas y los productos de cada venta.
+        Retorna la lista de clientes. Permite filtrar opcionalmente por 'rut' y 'nombre'.
+        Ignora los parámetros de búsqueda si están vacíos, devolviendo la lista completa.
         """
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
+        queryset = Cliente.objects.all().order_by('nombre')
         
-        # Obtener las ventas del cliente con sus detalles
-        ventas = Venta.objects.filter(cliente=instance).prefetch_related('detalles__producto').order_by('-fecha')
+        # Obtener parámetros de la URL
+        rut_param = self.request.query_params.get('rut', None)
+        nombre_param = self.request.query_params.get('nombre', None)
+
+        # Aplicar filtro SÓLO si el parámetro tiene contenido real
+        if rut_param:
+            # __icontains permite búsqueda parcial insensible a mayúsculas/minúsculas
+            queryset = queryset.filter(rut__icontains=rut_param)
+        
+        if nombre_param:
+            queryset = queryset.filter(nombre__icontains=nombre_param)
+            
+        return queryset
+
+    # ----------------------------------------------------
+    # 2. MÉTODO AUXILIAR PARA OBTENER VENTAS (Reutilizable y Limpio)
+    # ----------------------------------------------------
+
+    def _get_ventas_data(self, cliente):
+        """
+        Método auxiliar para obtener y formatear los datos de las ventas 
+        de un cliente específico.
+        """
+        # Optimizado: Usa prefetch_related para cargar todos los detalles y productos 
+        # en pocas consultas.
+        ventas = Venta.objects.filter(cliente=cliente).prefetch_related('detalles__producto').order_by('-fecha')
         
         ventas_data = []
         for venta in ventas:
-            # Obtener los productos de esta venta
             productos = []
+            
             for detalle in venta.detalles.all():
+                # Asegura que la multiplicación y la conversión a string usen Decimal
+                # Se asume que DetalleVenta.cantidad y DetalleVenta.precio_unitario son DecimalFields
+                subtotal = detalle.cantidad * detalle.precio_unitario 
                 productos.append({
                     'id': detalle.producto.id,
                     'nombre': detalle.producto.nombre,
                     'cantidad': detalle.cantidad,
                     'precio_unitario': str(detalle.precio_unitario),
-                    'subtotal': str(detalle.cantidad * detalle.precio_unitario)
+                    'subtotal': str(subtotal),
                 })
             
             ventas_data.append({
@@ -153,9 +205,61 @@ class ClienteViewSet(viewsets.ModelViewSet):
                 'folio_documento': venta.folio_documento,
                 'productos': productos
             })
-        
+            
+        return ventas_data
+
+
+    # ----------------------------------------------------
+    # 3. MÉTODO RETRIEVE (GET /clientes/{rut}/)
+    # ----------------------------------------------------
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retorna el cliente encontrado por 'rut' con sus ventas asociadas 
+        y los productos de cada venta.
+        """
+        try:
+            # get_object() ya usa lookup_field='rut' para buscar
+            instance = self.get_object() 
+        except ObjectDoesNotExist:
+            return Response({"detail": "Cliente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serializa los datos básicos del cliente
+        serializer = self.get_serializer(instance)
         response_data = serializer.data
-        response_data['ventas'] = ventas_data
+        
+        # Agrega las ventas detalladas usando el método auxiliar
+        response_data['ventas'] = self._get_ventas_data(instance)
+        
+        return Response(response_data)
+
+    # ----------------------------------------------------
+    # 2. ACCIÓN ADICIONAL (Opcional, si necesitas la ruta específica)
+    # ----------------------------------------------------
+
+    @action(detail=False, methods=['get'])
+    def buscar_por_rut(self, request):
+        """
+        Busca un cliente por su RUT pasado como parámetro de consulta (query parameter).
+        Endpoint: GET /pos/api/clientes/buscar_por_rut/?rut=12345678-9
+        """
+        rut_param = request.query_params.get('rut')
+        
+        if not rut_param:
+            return Response({"error": "Debe proporcionar el parámetro 'rut'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Buscar el cliente directamente
+            cliente = Cliente.objects.get(rut=rut_param)
+        except Cliente.DoesNotExist:
+            return Response({"error": f"Cliente con RUT {rut_param} no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Serializa los datos básicos del cliente
+        serializer = self.get_serializer(cliente)
+        response_data = serializer.data
+        
+        # Agrega las ventas detalladas
+        response_data['ventas'] = self._get_ventas_data(cliente)
         
         return Response(response_data)
 

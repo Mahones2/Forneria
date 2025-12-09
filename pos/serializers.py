@@ -273,48 +273,106 @@ class PagoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VentaSerializer(serializers.ModelSerializer):
-    detalles = DetalleVentaSerializer(many=True, required=False)
-    pagos = PagoSerializer(many=True, required=False)
-    # Se añade allow_null=True
-    cliente_nombre = serializers.CharField(source='cliente__nombre', read_only=True, allow_null=True)
+    # --- CAMPOS DE ESCRITURA (Write-Only) ---
+    
+    # 1. Recibe el ID del cliente desde el frontend (POS)
+    cliente_id = serializers.IntegerField(write_only=True, required=False, allow_null=True) 
+    
+    # 2. Recibe los ítems del carrito (que luego se convierten en DetalleVenta)
+    items = serializers.ListField(write_only=True, child=serializers.DictField(), required=False) 
+    
+    # --- CAMPOS DE LECTURA (Read-Only) ---
+
+    # 3. Detalle y Pagos anidados (solo lectura)
+    detalles = DetalleVentaSerializer(many=True, required=False, read_only=True)
+    pagos = PagoSerializer(many=True, required=False, read_only=True)
+    
+    # 4. Obtener Nombre/RUT del Cliente (Solución al "Consumidor Final")
+    cliente_nombre = serializers.SerializerMethodField()
+    cliente_rut = serializers.SerializerMethodField()
+    
+    # 5. Nombre del Vendedor (asumiendo relación Empleado -> Usuario)
     vendedor_nombre = serializers.CharField(source='empleado__usuario__first_name', read_only=True, allow_null=True)
 
     class Meta:
         model = Venta
-        fields = '__all__'
-        read_only_fields = ['neto', 'iva', 'total', 'fecha', 'folio_documento']
+        fields = (
+            'id', 'cliente', 'cliente_id', 'cliente_nombre', 'cliente_rut', 
+            'vendedor_nombre', 'detalles', 'pagos', 'items', 'neto', 'iva', 
+            'total', 'fecha', 'folio_documento', 'estado', 'costo_envio'
+        )
+        # Campos que DRF no debe intentar guardar, ya que los calculamos o son de solo lectura.
+        read_only_fields = ['neto', 'iva', 'total', 'fecha', 'folio_documento', 'cliente', 'detalles', 'estado']
+        
+    # --- MÉTODOS DE LECTURA (SerializerMethodField) ---
+    
+    def get_cliente_nombre(self, obj):
+        """Devuelve el nombre del cliente o 'Consumidor Final' si es nulo."""
+        if obj.cliente:
+            return obj.cliente.nombre
+        return 'Consumidor Final'
+
+    def get_cliente_rut(self, obj):
+        """Devuelve el RUT del cliente o None si es nulo."""
+        if obj.cliente:
+            return obj.cliente.rut
+        return None
+    
+    # --- MÉTODO DE ESCRITURA (CREATE) ---
 
     def create(self, validated_data):
-        # Extraer listas anidadas
-        items_data = validated_data.pop('items')
-        pagos_data = validated_data.pop('pagos')
-        detalles_data = validated_data.pop('detalles')
+        # --- 1. Extraer listas anidadas y claves de control ---
+        items_data = validated_data.pop('items', [])
+        pagos_data = validated_data.pop('pagos', [])
+        cliente_id = validated_data.pop('cliente_id', None)
+        
+        # Eliminar el campo redundante 'detalles' si existe para evitar conflictos
+        validated_data.pop('detalles', None) 
 
-        # 1. Asignar empleado y crear Venta (Asume que usas un RequestContext para obtener el empleado)
-        # Asegúrate de obtener el empleado del request si tu ViewSet no lo hace
+        # --- 2. MANEJO DEL CLIENTE ---
+        if cliente_id:
+            try:
+                # Busca el objeto Cliente y lo asigna al campo 'cliente'
+                validated_data['cliente'] = Cliente.objects.get(id=cliente_id)
+            except Cliente.DoesNotExist:
+                validated_data['cliente'] = None
+        else:
+             validated_data['cliente'] = None 
+
+        # --- 3. Asignar empleado y calcular Total ---
         request = self.context.get('request', None)
+        # Asume que el usuario autenticado tiene una relación 'empleado'
         empleado = request.user.empleado if request and hasattr(request.user, 'empleado') else None
         
-        # Calcular el total de la Venta a partir de los items para seguridad
+        # Recalcular el total y asignar empleado
         total_calculado = sum(
             Decimal(item['precio_unitario']) * item['cantidad'] for item in items_data
         )
 
-        venta = Venta.objects.create(
-            empleado=empleado, 
-            total=total_calculado,
-            **validated_data
-        )
+        validated_data['empleado'] = empleado
+        validated_data['total'] = total_calculado
+        
+        # --- 4. Crear el objeto Venta ---
+        venta = Venta.objects.create(**validated_data)
 
-        # 2. Crear DetalleVenta (Items)
+        # --- 5. Crear DetalleVenta (Items) ---
         for item_data in items_data:
-            DetalleVenta.objects.create(venta=venta, **item_data)
+            # Asegúrate de que 'producto_id' existe en item_data
+            try:
+                producto = Producto.objects.get(id=item_data['producto_id'])
+            except Producto.DoesNotExist:
+                # Manejo de error si el producto no existe (debes decidir si abortar la venta o registrar un error)
+                raise serializers.ValidationError(f"Producto con ID {item_data.get('producto_id')} no encontrado.")
 
-        # Pagos multi
+            DetalleVenta.objects.create(
+                venta=venta, 
+                producto=producto, 
+                cantidad=item_data['cantidad'],
+                precio_unitario=item_data['precio_unitario'] 
+            )
+
+        # --- 6. Crear Pagos ---
         for pago_data in pagos_data:
             Pago.objects.create(venta=venta, **pago_data)
             
-        for detalle_data in detalles_data: # Usar detalles_data
-            DetalleVenta.objects.create(venta=venta, **detalle_data)
-
         return venta
