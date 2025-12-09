@@ -46,7 +46,10 @@ INSTALLED_APPS = [
     
     'pos',
     'inventario',
-    'pedido'
+    'pedido',
+    'analytics',
+    'landing',
+    'reportes'
 ]
 
 
