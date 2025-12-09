@@ -20,6 +20,7 @@ ALLOWED_HOSTS = []
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite
+    "http://localhost:5174",  # Vite (puerto alternativo)
     "http://localhost:3000",  # CRA
 ]
 
