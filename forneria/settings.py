@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     
     'pos',
     'inventario',
-    'pedido'
+    'pedido',
+    'analytics'
 ]
 
 
@@ -176,4 +177,5 @@ REST_AUTH = {
 
 REST_AUTH_SERIALIZERS = {
     'JWT_SERIALIZER': 'pos.serializers.CustomJWTSerializer',
+    'USER_DETAILS_SERIALIZER': 'pos.serializers.UserDetailsSerializer',
 }
