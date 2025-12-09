@@ -1,0 +1,21 @@
+{% extends "pos/basepos.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container" style="padding:2rem; max-width:700px;">
+  <h2>{% if producto %}Editar producto{% else %}Crear producto{% endif %}</h2>
+  {% if saved %}
+    <div style="padding:12px; background:#e6ffed; border:1px solid #b9f0c2; margin-bottom:12px;">Producto guardado: {{ producto.nombre }}</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <table>
+      {{ form.as_table }}
+    </table>
+    <div style="margin-top:12px;">
+      <button class="button1" type="submit">Guardar</button>
+      <a class="btn-secondary" href="{% url 'inventario' %}">Volver</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

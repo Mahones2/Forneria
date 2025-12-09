@@ -1,0 +1,494 @@
+[
+  {
+    "model": "pos.empleado",
+    "pk": 1,
+    "fields": {
+      "nombres": "Carlos",
+      "apellido_paterno": "Rodríguez",
+      "run": "11111111-1",
+      "correo": "carlos@forneria.cl",
+      "fono": 912345678,
+      "clave": "pbkdf2_sha256$600000$test$test",
+      "direccion": "Calle Principal 123",
+      "cargo": "Cajero",
+      "usuario": 1
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 1,
+    "fields": {
+      "fecha": "2025-11-01T10:30:00Z",
+      "cliente": 1,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "8400.00",
+      "iva": "1596.00",
+      "total": "9996.00",
+      "estado": "entregado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-001"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 1,
+    "fields": {
+      "venta": 1,
+      "producto": 1,
+      "cantidad": 3,
+      "precio_unitario": "1500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 2,
+    "fields": {
+      "venta": 1,
+      "producto": 3,
+      "cantidad": 2,
+      "precio_unitario": "1800.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 2,
+    "fields": {
+      "fecha": "2025-11-05T14:15:00Z",
+      "cliente": 2,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "11900.00",
+      "iva": "2261.00",
+      "total": "14161.00",
+      "estado": "entregado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-002"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 3,
+    "fields": {
+      "venta": 2,
+      "producto": 2,
+      "cantidad": 5,
+      "precio_unitario": "1200.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 4,
+    "fields": {
+      "venta": 2,
+      "producto": 4,
+      "cantidad": 3,
+      "precio_unitario": "1200.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 5,
+    "fields": {
+      "venta": 2,
+      "producto": 6,
+      "cantidad": 1,
+      "precio_unitario": "2000.00",
+      "descuento": "200.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 3,
+    "fields": {
+      "fecha": "2025-11-10T16:45:00Z",
+      "cliente": 3,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "28000.00",
+      "iva": "5320.00",
+      "total": "33320.00",
+      "estado": "entregado",
+      "tipo_documento": "factura",
+      "folio_documento": "F-001"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 6,
+    "fields": {
+      "venta": 3,
+      "producto": 1,
+      "cantidad": 10,
+      "precio_unitario": "1500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 7,
+    "fields": {
+      "venta": 3,
+      "producto": 3,
+      "cantidad": 5,
+      "precio_unitario": "1800.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 8,
+    "fields": {
+      "venta": 3,
+      "producto": 7,
+      "cantidad": 1,
+      "precio_unitario": "4500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 4,
+    "fields": {
+      "fecha": "2025-11-15T11:20:00Z",
+      "cliente": 1,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "6300.00",
+      "iva": "1197.00",
+      "total": "7497.00",
+      "estado": "entregado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-003"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 9,
+    "fields": {
+      "venta": 4,
+      "producto": 5,
+      "cantidad": 2,
+      "precio_unitario": "2500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 10,
+    "fields": {
+      "venta": 4,
+      "producto": 8,
+      "cantidad": 1,
+      "precio_unitario": "1800.00",
+      "descuento": "500.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 5,
+    "fields": {
+      "fecha": "2025-11-20T09:00:00Z",
+      "cliente": 2,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "15600.00",
+      "iva": "2964.00",
+      "total": "18564.00",
+      "estado": "entregado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-004"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 11,
+    "fields": {
+      "venta": 5,
+      "producto": 1,
+      "cantidad": 4,
+      "precio_unitario": "1500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 12,
+    "fields": {
+      "venta": 5,
+      "producto": 3,
+      "cantidad": 3,
+      "precio_unitario": "1800.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 13,
+    "fields": {
+      "venta": 5,
+      "producto": 6,
+      "cantidad": 2,
+      "precio_unitario": "2000.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 6,
+    "fields": {
+      "fecha": "2025-11-22T13:30:00Z",
+      "cliente": 3,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "21400.00",
+      "iva": "4066.00",
+      "total": "25466.00",
+      "estado": "entregado",
+      "tipo_documento": "factura",
+      "folio_documento": "F-002"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 14,
+    "fields": {
+      "venta": 6,
+      "producto": 2,
+      "cantidad": 8,
+      "precio_unitario": "1200.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 15,
+    "fields": {
+      "venta": 6,
+      "producto": 4,
+      "cantidad": 5,
+      "precio_unitario": "1200.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 16,
+    "fields": {
+      "venta": 6,
+      "producto": 5,
+      "cantidad": 2,
+      "precio_unitario": "2500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 7,
+    "fields": {
+      "fecha": "2025-11-25T15:45:00Z",
+      "cliente": 1,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "13500.00",
+      "iva": "2565.00",
+      "total": "16065.00",
+      "estado": "entregado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-005"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 17,
+    "fields": {
+      "venta": 7,
+      "producto": 7,
+      "cantidad": 2,
+      "precio_unitario": "4500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 18,
+    "fields": {
+      "venta": 7,
+      "producto": 8,
+      "cantidad": 3,
+      "precio_unitario": "1800.00",
+      "descuento": "900.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 8,
+    "fields": {
+      "fecha": "2025-11-26T10:10:00Z",
+      "cliente": 2,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "18900.00",
+      "iva": "3591.00",
+      "total": "22491.00",
+      "estado": "entregado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-006"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 19,
+    "fields": {
+      "venta": 8,
+      "producto": 1,
+      "cantidad": 5,
+      "precio_unitario": "1500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 20,
+    "fields": {
+      "venta": 8,
+      "producto": 2,
+      "cantidad": 6,
+      "precio_unitario": "1200.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 21,
+    "fields": {
+      "venta": 8,
+      "producto": 6,
+      "cantidad": 2,
+      "precio_unitario": "2000.00",
+      "descuento": "300.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 9,
+    "fields": {
+      "fecha": "2025-11-27T08:20:00Z",
+      "cliente": 3,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "32000.00",
+      "iva": "6080.00",
+      "total": "38080.00",
+      "estado": "pagado",
+      "tipo_documento": "factura",
+      "folio_documento": "F-003"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 22,
+    "fields": {
+      "venta": 9,
+      "producto": 1,
+      "cantidad": 10,
+      "precio_unitario": "1500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 23,
+    "fields": {
+      "venta": 9,
+      "producto": 3,
+      "cantidad": 8,
+      "precio_unitario": "1800.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 24,
+    "fields": {
+      "venta": 9,
+      "producto": 5,
+      "cantidad": 1,
+      "precio_unitario": "2500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.venta",
+    "pk": 10,
+    "fields": {
+      "fecha": "2025-11-27T12:00:00Z",
+      "cliente": 1,
+      "empleado": 1,
+      "canal_venta": "pos",
+      "direccion_despacho": null,
+      "costo_envio": "0.00",
+      "neto": "9500.00",
+      "iva": "1805.00",
+      "total": "11305.00",
+      "estado": "pagado",
+      "tipo_documento": "boleta",
+      "folio_documento": "B-007"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 25,
+    "fields": {
+      "venta": 10,
+      "producto": 7,
+      "cantidad": 1,
+      "precio_unitario": "4500.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 26,
+    "fields": {
+      "venta": 10,
+      "producto": 4,
+      "cantidad": 3,
+      "precio_unitario": "1200.00",
+      "descuento": "0.00"
+    }
+  },
+  {
+    "model": "pos.detalleventa",
+    "pk": 27,
+    "fields": {
+      "venta": 10,
+      "producto": 8,
+      "cantidad": 1,
+      "precio_unitario": "1800.00",
+      "descuento": "500.00"
+    }
+  }
+]
