@@ -296,6 +296,55 @@ def alertas_automaticas(request):
     return Response(data)
 
 
+@api_view(['GET'])
+def dashboard_ventas_api(request):
+    """
+    GET /dashboard/ventas/
+    Endpoint específico para el frontend DashboardFinanciero.jsx
+
+    Retorna datos consolidados para dashboard de ventas:
+    - kpis: Métricas de ventas (30 días + hoy)
+    - dias: Ventas diarias últimos 60 días (para gráfico de líneas)
+    - meses: Ventas mensuales (para gráfico de barras)
+    """
+    from datetime import date, timedelta
+
+    # Calcular período de 30 días
+    hoy = date.today()
+    hace_30_dias = hoy - timedelta(days=30)
+    hace_60_dias = hoy - timedelta(days=60)
+
+    # Obtener KPIs de 30 días
+    resumen = FinanzasMetrics.resumen_periodo(hace_30_dias, hoy)
+    kpis_dia = FinanzasMetrics.kpis_hoy()
+
+    # Obtener ventas diarias (últimos 60 días para el gráfico)
+    ventas_60_dias = FinanzasMetrics.ventas_diarias(hace_60_dias, hoy)
+
+    # Obtener ventas mensuales (últimos 6 meses)
+    ventas_meses = FinanzasMetrics.comparativa_mensual(meses=6)
+
+    # Construir respuesta en el formato esperado por el frontend
+    response_data = {
+        'kpis': {
+            'total_ingresos_30': resumen['total_ventas'],
+            'total_ventas_30': resumen['cantidad_transacciones'],
+            'promedio_venta_30': resumen['ticket_promedio'],
+            'ventas_hoy': kpis_dia['hoy']['cantidad']
+        },
+        'dias': [
+            {'dia': ventas_60_dias['labels'][i], 'total': ventas_60_dias['totales'][i]}
+            for i in range(len(ventas_60_dias['labels']))
+        ],
+        'meses': [
+            {'mes': ventas_meses['labels'][i], 'total': ventas_meses['totales'][i]}
+            for i in range(len(ventas_meses['labels']))
+        ]
+    }
+
+    return Response(response_data)
+
+
 # === FUNCIONES DE EXPORTACIÓN ===
 
 def exportar_excel(request):

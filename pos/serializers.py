@@ -329,3 +329,41 @@ class CarritoSerializer(serializers.ModelSerializer):
         for item in obj.items.all():
             total += item.cantidad * item.producto.precio_venta
         return total
+
+
+# ==========================================
+# SERIALIZER PARA AUTH (dj-rest-auth)
+# ==========================================
+
+from django.contrib.auth.models import User
+
+class UserDetailsSerializer(serializers.ModelSerializer):
+    """
+    Serializer personalizado para dj-rest-auth
+    Incluye los datos del empleado asociado al usuario
+    """
+    empleado = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['pk', 'username', 'email', 'first_name', 'last_name', 'empleado']
+        read_only_fields = ['pk', 'username', 'email']
+
+    def get_empleado(self, obj):
+        """
+        Devuelve los datos del Empleado asociado al usuario
+        """
+        try:
+            empleado = obj.empleado
+            return {
+                'id': empleado.id,
+                'run': empleado.run,
+                'fono': empleado.fono,
+                'direccion': empleado.direccion,
+                'cargo': empleado.cargo,
+                'nombre_completo': f"{empleado.nombres} {empleado.apellido_paterno}",
+                'nombres': empleado.nombres,
+                'apellido_paterno': empleado.apellido_paterno,
+            }
+        except Empleado.DoesNotExist:
+            return None

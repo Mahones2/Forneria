@@ -166,7 +166,8 @@ REST_FRAMEWORK = {
 
 REST_AUTH = {
     'USE_JWT': True,
-    'TOKEN_MODEL': None,  
+    'TOKEN_MODEL': None,
     'JWT_AUTH_COOKIE': 'djangojwtauth_cookie',
     'JWT_AUTH_REFRESH_COOKIE': 'djangojwtauth_refresh_cookie',
+    'USER_DETAILS_SERIALIZER': 'pos.serializers.UserDetailsSerializer',
 }

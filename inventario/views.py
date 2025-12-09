@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from datetime import datetime
 import json
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from pos.models import Producto, Categoria
 from .services import InventarioMetrics
@@ -147,3 +149,38 @@ def dashboard_inventario(request):
     }
 
     return render(request, 'dashboard_inventario.html', context)
+
+
+@api_view(['GET'])
+def dashboard_inventario_api(request):
+    """
+    GET /dashboard/inventario/
+    Endpoint API para el frontend - retorna datos del dashboard de inventario
+    """
+    # Helper function to convert Decimal to float
+    def clean_for_json(obj):
+        if isinstance(obj, dict):
+            return {k: clean_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [clean_for_json(item) for item in obj]
+        elif hasattr(obj, '__float__'):
+            return float(obj)
+        else:
+            return obj
+
+    # Obtener todas las métricas
+    kpis = clean_for_json(InventarioMetrics.kpis_generales())
+    productos_bajo = clean_for_json(InventarioMetrics.productos_stock_bajo(limite=10))
+    productos_vencer = clean_for_json(InventarioMetrics.productos_proximos_vencer(dias=7, limite=10))
+    productos_vencidos = clean_for_json(InventarioMetrics.productos_vencidos())
+    stock_categoria = clean_for_json(InventarioMetrics.stock_por_categoria())
+
+    response_data = {
+        'kpis': kpis,
+        'productos_bajo_stock': productos_bajo,
+        'productos_vencer': productos_vencer,
+        'productos_vencidos': productos_vencidos,
+        'stock_categoria': stock_categoria
+    }
+
+    return Response(response_data)
