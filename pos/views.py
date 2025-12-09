@@ -120,6 +120,44 @@ class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
     permission_classes = [IsAuthenticated]
+    lookup_field = 'rut'
+    
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retorna el cliente con sus ventas asociadas y los productos de cada venta.
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        
+        # Obtener las ventas del cliente con sus detalles
+        ventas = Venta.objects.filter(cliente=instance).prefetch_related('detalles__producto').order_by('-fecha')
+        
+        ventas_data = []
+        for venta in ventas:
+            # Obtener los productos de esta venta
+            productos = []
+            for detalle in venta.detalles.all():
+                productos.append({
+                    'id': detalle.producto.id,
+                    'nombre': detalle.producto.nombre,
+                    'cantidad': detalle.cantidad,
+                    'precio_unitario': str(detalle.precio_unitario),
+                    'subtotal': str(detalle.cantidad * detalle.precio_unitario)
+                })
+            
+            ventas_data.append({
+                'id': venta.id,
+                'fecha': venta.fecha,
+                'total': str(venta.total),
+                'estado': venta.estado,
+                'folio_documento': venta.folio_documento,
+                'productos': productos
+            })
+        
+        response_data = serializer.data
+        response_data['ventas'] = ventas_data
+        
+        return Response(response_data)
 
 class EmpleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all()
