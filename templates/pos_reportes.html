@@ -1,7 +1,314 @@
-{% extends "pos/basepos.html" %}
+{% extends 'pos/basepos.html' %}
 {% load static %}
 
 {% block content %}
-  {# Reusar el dashboard principal #}
-  {% include 'pos_dashboard.html' %}
+<div class="py-4">
+    <!-- Header con filtros -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">📊 Dashboard de Ventas</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <form method="get" class="d-flex gap-2">
+                <input type="date" name="fecha_inicio" class="form-control form-control-sm" value="{{ fecha_inicio }}">
+                <input type="date" name="fecha_fin" class="form-control form-control-sm" value="{{ fecha_fin }}">
+                <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- KPIs Principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Ventas del Día</h6>
+                    <h3 class="card-title mb-0">${{ kpis.ventas_hoy|floatformat:0 }}</h3>
+                    <small>{{ kpis.cantidad_transacciones_hoy }} transacciones</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Ventas del Periodo</h6>
+                    <h3 class="card-title mb-0">${{ resumen.neto|floatformat:0 }}</h3>
+                    <small>{{ resumen.cantidad_transacciones }} transacciones</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Ticket Promedio</h6>
+                    <h3 class="card-title mb-0">${{ resumen.ticket_promedio|floatformat:0 }}</h3>
+                    <small>Por transacción</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2">Productos Vendidos</h6>
+                    <h3 class="card-title mb-0">{{ resumen.productos_vendidos }}</h3>
+                    <small>Unidades</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos de Ventas -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ventas Diarias</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="ventasDiariasChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ventas por Canal</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="ventasCanalChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos Top y Categorías -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Top 10 Productos Más Vendidos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos_top %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ producto.nombre }}</strong><br>
+                                        <small class="text-muted">{{ producto.categoria }}</small>
+                                    </td>
+                                    <td class="text-end">{{ producto.cantidad_vendida }}</td>
+                                    <td class="text-end">${{ producto.total_vendido|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">No hay datos</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ventas por Categoría</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoriasChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventas por Hora y Día de Semana -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ventas por Hora del Día</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="ventasHoraChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Ventas por Día de la Semana</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="ventasDiaSemanaChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Clientes -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Top 10 Clientes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th class="text-end">Compras</th>
+                                    <th class="text-end">Total Gastado</th>
+                                    <th class="text-end">Ticket Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cliente in clientes_top %}
+                                <tr>
+                                    <td><strong>{{ cliente.nombre }}</strong></td>
+                                    <td class="text-end">{{ cliente.cantidad_compras }}</td>
+                                    <td class="text-end">${{ cliente.total_gastado|floatformat:0 }}</td>
+                                    <td class="text-end">${{ cliente.ticket_promedio|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted">No hay datos</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartColors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+    ];
+
+    // Ventas Diarias
+    const ventasDiarias = {{ ventas_diarias_json|safe }};
+    if (ventasDiarias && ventasDiarias.labels) {
+        new Chart(document.getElementById('ventasDiariasChart'), {
+            type: 'line',
+            data: {
+                labels: ventasDiarias.labels,
+                datasets: [{
+                    label: 'Ventas',
+                    data: ventasDiarias.totales,
+                    borderColor: '#36A2EB',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Ventas por Canal
+    const ventasCanal = {{ ventas_canal_json|safe }};
+    if (ventasCanal && ventasCanal.length > 0) {
+        new Chart(document.getElementById('ventasCanalChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ventasCanal.map(c => c.canal),
+                datasets: [{
+                    data: ventasCanal.map(c => c.total),
+                    backgroundColor: chartColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // Ventas por Categoría
+    const categorias = {{ categorias_json|safe }};
+    if (categorias && categorias.length > 0) {
+        new Chart(document.getElementById('categoriasChart'), {
+            type: 'bar',
+            data: {
+                labels: categorias.map(c => c.categoria),
+                datasets: [{
+                    label: 'Ventas',
+                    data: categorias.map(c => c.total),
+                    backgroundColor: chartColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Ventas por Hora
+    const ventasHora = {{ ventas_hora_json|safe }};
+    if (ventasHora && ventasHora.labels) {
+        new Chart(document.getElementById('ventasHoraChart'), {
+            type: 'bar',
+            data: {
+                labels: ventasHora.labels,
+                datasets: [{
+                    label: 'Ventas',
+                    data: ventasHora.totales,
+                    backgroundColor: '#4BC0C0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Ventas por Día de Semana
+    const ventasDiaSemana = {{ ventas_dia_semana_json|safe }};
+    if (ventasDiaSemana && ventasDiaSemana.labels) {
+        new Chart(document.getElementById('ventasDiaSemanaChart'), {
+            type: 'bar',
+            data: {
+                labels: ventasDiaSemana.labels,
+                datasets: [{
+                    label: 'Ventas',
+                    data: ventasDiaSemana.totales,
+                    backgroundColor: '#9966FF'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

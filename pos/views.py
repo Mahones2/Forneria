@@ -11,6 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 # Python Standard Library
 import csv
+import json
+from datetime import datetime
 from decimal import Decimal
 import requests
 
@@ -38,6 +40,8 @@ from .forms import ProductoForm, LoteForm
 from .services import procesar_venta
 from django.utils.text import slugify
 from django.contrib.staticfiles import finders
+from analytics.services import FinanzasMetrics
+from inventario.services import InventarioMetrics
 # Create your views here.
 
 @api_view(['GET'])
@@ -589,8 +593,67 @@ def pedidos_page(request):
 
 
 def reportes_page(request):
-    # Reusar dashboard como punto de entrada a reportes
-    return dashboard(request)
+    """Dashboard de Ventas y Reportes"""
+    # Parsear filtros de fecha
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    
+    if fecha_inicio:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        except:
+            fecha_inicio = None
+    
+    if fecha_fin:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        except:
+            fecha_fin = None
+    
+    # Obtener métricas de ventas
+    kpis = FinanzasMetrics.kpis_hoy()
+    resumen = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
+    ventas_diarias = FinanzasMetrics.ventas_diarias(fecha_inicio, fecha_fin)
+    ventas_hora = FinanzasMetrics.ventas_por_hora()
+    productos_top = FinanzasMetrics.productos_top(limite=10, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    categorias = FinanzasMetrics.ventas_por_categoria(fecha_inicio, fecha_fin)
+    ventas_canal = FinanzasMetrics.ventas_por_canal(fecha_inicio, fecha_fin)
+    clientes_top = FinanzasMetrics.clientes_top(limite=10, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+    ventas_dia_semana = FinanzasMetrics.ventas_por_dia_semana(fecha_inicio, fecha_fin)
+    ticket_segmentado = FinanzasMetrics.ticket_promedio_segmentado(fecha_inicio, fecha_fin)
+    
+    # Helper para limpiar Decimals en JSON
+    def clean_for_json(obj):
+        if isinstance(obj, dict):
+            return {k: clean_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [clean_for_json(item) for item in obj]
+        elif hasattr(obj, '__float__'):
+            return float(obj)
+        else:
+            return obj
+    
+    context = {
+        'kpis': kpis,
+        'resumen': resumen,
+        'productos_top': productos_top,
+        'categorias': categorias,
+        'ventas_canal': ventas_canal,
+        'clientes_top': clientes_top,
+        'ticket_segmentado': ticket_segmentado,
+        'fecha_actual': timezone.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'fecha_inicio': fecha_inicio.isoformat() if fecha_inicio else '',
+        'fecha_fin': fecha_fin.isoformat() if fecha_fin else '',
+        
+        # JSON para gráficos
+        'ventas_diarias_json': json.dumps(clean_for_json(ventas_diarias)),
+        'ventas_hora_json': json.dumps(clean_for_json(ventas_hora)),
+        'categorias_json': json.dumps(clean_for_json(categorias)),
+        'ventas_canal_json': json.dumps(clean_for_json(ventas_canal)),
+        'ventas_dia_semana_json': json.dumps(clean_for_json(ventas_dia_semana)),
+    }
+    
+    return render(request, 'pos_reportes.html', context)
 
 
 def cliente_detail(request, rut):

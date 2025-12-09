@@ -49,7 +49,7 @@ urlpatterns = [
     path("pedidos/", login_required(views.pedidos_page), name='pedidos'),
     path("clientes/", login_required(views.clientes_page), name='clientes'),
     path("clientes/<str:rut>/", login_required(views.cliente_detail), name='cliente_detail'),
-    path("reportes/", login_required(views.reportes_page), name='reportes'),
+    path("metricas-ventas/", login_required(views.reportes_page), name='metricas-ventas'),
     # API REST (router) al final para no colisionar con las páginas UI
     path('', include(router.urls)),
 

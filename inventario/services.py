@@ -63,12 +63,10 @@ class InventarioMetrics:
             for p in productos_con_stock if p.costo_unitario
         )
 
-        # Productos con stock bajo (menor al stock mínimo del lote)
-        productos_bajo_stock = Lote.objects.filter(
-            eliminado__isnull=True,
-            stock_minimo__isnull=False,
-            stock_actual__lt=F('stock_minimo')
-        ).values('producto').distinct().count()
+        # Productos con stock bajo (menor al stock mínimo global)
+        productos_bajo_stock = Producto.objects.filter(
+            stock_fisico__lt=F('stock_minimo_global')
+        ).count()
 
         # Insumos con stock bajo
         insumos_bajo_stock = Insumo.objects.filter(
@@ -90,24 +88,22 @@ class InventarioMetrics:
     @staticmethod
     def productos_stock_bajo(limite=10):
         """
-        Lista de productos con stock bajo
+        Lista de productos con stock bajo (basado en stock_fisico vs stock_minimo_global)
         """
-        lotes_bajo = Lote.objects.filter(
-            eliminado__isnull=True,
-            stock_minimo__isnull=False,
-            stock_actual__lt=F('stock_minimo')
-        ).select_related('producto', 'producto__categoria').order_by('stock_actual')[:limite]
+        productos_bajo = Producto.objects.filter(
+            stock_fisico__lt=F('stock_minimo_global')
+        ).select_related('categoria').order_by('stock_fisico')[:limite]
 
         resultado = []
-        for lote in lotes_bajo:
+        for producto in productos_bajo:
             resultado.append({
-                'producto_id': lote.producto.id,
-                'producto_nombre': lote.producto.nombre,
-                'categoria': lote.producto.categoria.nombre if lote.producto.categoria else 'Sin categoría',
-                'stock_actual': lote.stock_actual,
-                'stock_minimo': lote.stock_minimo,
-                'numero_lote': lote.numero_lote or f"Lote {lote.id}",
-                'diferencia': lote.stock_minimo - lote.stock_actual,
+                'producto_id': producto.id,
+                'producto_nombre': producto.nombre,
+                'categoria': producto.categoria.nombre if producto.categoria else 'Sin categoría',
+                'stock_actual': producto.stock_fisico,
+                'stock_minimo': producto.stock_minimo_global,
+                'numero_lote': f"Total consolidado",
+                'diferencia': producto.stock_minimo_global - producto.stock_fisico,
             })
 
         return resultado
@@ -264,9 +260,9 @@ class InventarioMetrics:
             fecha__date__range=[fecha_inicio, fecha_fin]
         ).annotate(
             fecha_dia=TruncDate('fecha')
-        ).values('fecha_dia', 'tipo_movimiento').annotate(
+        ).values('fecha_dia', 'tipo').annotate(
             total_cantidad=Sum('cantidad')
-        ).order_by('fecha_dia', 'tipo_movimiento')
+        ).order_by('fecha_dia', 'tipo')
 
         # Organizar por día
         dias_dict = {}
@@ -274,7 +270,7 @@ class InventarioMetrics:
             fecha_str = mov['fecha_dia'].isoformat()
             if fecha_str not in dias_dict:
                 dias_dict[fecha_str] = {'entrada': 0, 'salida': 0}
-            dias_dict[fecha_str][mov['tipo_movimiento']] = mov['total_cantidad']
+            dias_dict[fecha_str][mov['tipo']] = mov['total_cantidad']
 
         labels = sorted(dias_dict.keys())
         entradas = [dias_dict[fecha]['entrada'] for fecha in labels]
@@ -368,7 +364,7 @@ class InventarioMetrics:
         """
         Resumen de alertas activas por tipo
         """
-        alertas = Alerta.objects.values('tipo_alerta').annotate(
+        alertas = Alerta.objects.values('tipo').annotate(
             cantidad=Count('id')
         )
 
@@ -380,7 +376,7 @@ class InventarioMetrics:
         }
 
         for alerta in alertas:
-            tipo = alerta['tipo_alerta']
+            tipo = alerta['tipo']
             cantidad = alerta['cantidad']
             resumen[tipo] = cantidad
             resumen['total'] += cantidad
@@ -394,17 +390,17 @@ class InventarioMetrics:
         """
         alertas = Alerta.objects.select_related(
             'producto', 'producto__categoria'
-        ).order_by('-fecha_generada')[:limite]
+        ).order_by('-fecha_creacion')[:limite]
 
         resultado = []
         for alerta in alertas:
             resultado.append({
-                'tipo': alerta.tipo_alerta,
+                'tipo': alerta.tipo,
                 'mensaje': alerta.mensaje,
                 'producto': alerta.producto.nombre,
                 'categoria': alerta.producto.categoria.nombre if alerta.producto.categoria else 'Sin categoría',
-                'fecha': alerta.fecha_generada.isoformat() if alerta.fecha_generada else None,
-                'estado': alerta.estado or 'activa'
+                'fecha': alerta.fecha_creacion.isoformat() if alerta.fecha_creacion else None,
+                'estado': 'resuelta' if alerta.resuelto else 'activa'
             })
 
         return resultado
