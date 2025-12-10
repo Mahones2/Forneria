@@ -129,6 +129,8 @@ def dashboard_inventario(request):
         'productos_movimiento': productos_movimiento,
 
         'stock_categoria': stock_categoria,
+        'movimientos': movimientos,
+        'compras_proveedor': compras_proveedor,
         'valorizacion': valorizacion,
 
         'alertas_resumen': alertas_resumen,
@@ -174,13 +176,17 @@ def dashboard_inventario_api(request):
     productos_vencer = clean_for_json(InventarioMetrics.productos_proximos_vencer(dias=7, limite=10))
     productos_vencidos = clean_for_json(InventarioMetrics.productos_vencidos())
     stock_categoria = clean_for_json(InventarioMetrics.stock_por_categoria())
+    movimientos = clean_for_json(InventarioMetrics.movimientos_inventario())
+    compras_proveedor = clean_for_json(InventarioMetrics.compras_por_proveedor())
 
     response_data = {
         'kpis': kpis,
         'productos_bajo_stock': productos_bajo,
         'productos_vencer': productos_vencer,
         'productos_vencidos': productos_vencidos,
-        'stock_categoria': stock_categoria
+        'stock_categoria': stock_categoria,
+        'movimientos': movimientos,
+        'compras_proveedor': compras_proveedor
     }
 
     return Response(response_data)
