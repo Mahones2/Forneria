@@ -811,3 +811,97 @@ def dashboard_finanzas(request):
     }
 
     return render(request, 'dashboard_finanzas.html', context)
+
+
+# === NUEVAS VISTAS API PARA DASHBOARD FINANCIERO ===
+
+@api_view(['GET'])
+def utilidad_bruta_api(request):
+    """
+    GET /analytics/finanzas/utilidad-bruta/
+    Retorna utilidad bruta del periodo
+    """
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.utilidad_bruta(fecha_inicio, fecha_fin)
+    return Response(data)
+
+
+@api_view(['GET'])
+def gastos_operativos_api(request):
+    """
+    GET /analytics/finanzas/gastos-operativos/
+    Retorna gastos operativos del periodo
+    """
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.gastos_operativos(fecha_inicio, fecha_fin)
+    return Response(data)
+
+
+@api_view(['GET'])
+def utilidad_neta_api(request):
+    """
+    GET /analytics/finanzas/utilidad-neta/
+    Retorna utilidad neta del periodo
+    """
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.utilidad_neta(fecha_inicio, fecha_fin)
+    return Response(data)
+
+
+@api_view(['GET'])
+def roi_api(request):
+    """
+    GET /analytics/finanzas/roi/
+    Retorna ROI del periodo
+    """
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.roi(fecha_inicio, fecha_fin)
+    return Response(data)
+
+
+@api_view(['GET'])
+def punto_equilibrio_api(request):
+    """
+    GET /analytics/finanzas/punto-equilibrio/
+    Retorna punto de equilibrio
+    """
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.punto_equilibrio(fecha_inicio, fecha_fin)
+    return Response(data)
+
+
+@api_view(['GET'])
+def productos_rentables_api(request):
+    """
+    GET /analytics/finanzas/productos-rentables/
+    Retorna productos más rentables
+    """
+    limite = int(request.GET.get('limite', 20))
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.productos_rentables(limite, fecha_inicio, fecha_fin)
+    return Response(data)
+
+
+@api_view(['GET'])
+def flujo_caja_api(request):
+    """
+    GET /analytics/finanzas/flujo-caja/
+    Retorna flujo de caja del periodo
+    """
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+    
+    data = FinanzasMetrics.flujo_caja(fecha_inicio, fecha_fin)
+    return Response(data)

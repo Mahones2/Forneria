@@ -30,6 +30,15 @@ urlpatterns = [
     path('finanzas/ventas-por-canal/', views.ventas_por_canal, name='finanzas-ventas-por-canal'),
     path('finanzas/clientes-top/', views.clientes_top, name='finanzas-clientes-top'),
 
+    # Finanzas - Métricas financieras
+    path('finanzas/utilidad-bruta/', views.utilidad_bruta_api, name='utilidad-bruta'),
+    path('finanzas/gastos-operativos/', views.gastos_operativos_api, name='gastos-operativos'),
+    path('finanzas/utilidad-neta/', views.utilidad_neta_api, name='utilidad-neta'),
+    path('finanzas/roi/', views.roi_api, name='roi'),
+    path('finanzas/punto-equilibrio/', views.punto_equilibrio_api, name='punto-equilibrio'),
+    path('finanzas/productos-rentables/', views.productos_rentables_api, name='productos-rentables'),
+    path('finanzas/flujo-caja/', views.flujo_caja_api, name='flujo-caja'),
+
     # === ENDPOINTS AVANZADOS ===
     # Métricas avanzadas
     path('finanzas/metricas-avanzadas/', views.metricas_avanzadas, name='metricas-avanzadas'),
