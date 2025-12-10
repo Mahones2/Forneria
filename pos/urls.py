@@ -49,11 +49,11 @@ urlpatterns = [
     # path("metricas-ventas/", login_required(views.reportes_page), name='metricas-ventas'),
     
     # API REST (router)
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
 
     # Rutas de autenticación (dj-rest-auth)
-    path('auth/login/', LoginView.as_view(), name='rest_login'),
-    path('auth/logout/', LogoutView.as_view(), name='rest_logout'),
+    path('api/auth/login/', LoginView.as_view(), name='rest_login'),
+    path('api/auth/logout/', LogoutView.as_view(), name='rest_logout'),
 
     # Rutas para reportes
     path('reportes/stock-bajo/', views.ProductosStockBajoList.as_view(), name='reporte-stock-bajo'),
