@@ -10,11 +10,11 @@ class ResumenPeriodoSerializer(serializers.Serializer):
     total_ventas = serializers.DecimalField(max_digits=12, decimal_places=2)
     cantidad_transacciones = serializers.IntegerField()
     ticket_promedio = serializers.DecimalField(max_digits=10, decimal_places=2)
-    total_sin_iva = serializers.DecimalField(max_digits=12, decimal_places=2)
+    neto = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_iva = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_descuentos = serializers.DecimalField(max_digits=12, decimal_places=2)
-    fecha_inicio = serializers.DateField()
-    fecha_fin = serializers.DateField()
+    fecha_inicio = serializers.CharField()
+    fecha_fin = serializers.CharField()
 
 
 class VentasDiariasSerializer(serializers.Serializer):
