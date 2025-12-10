@@ -4,10 +4,10 @@ from decimal import Decimal
 from django.contrib.auth.models import User 
 from .models import (
     Categoria, Producto, Nutricional, Lote, MovimientoInventario, 
-    Alerta, Cliente, Direccion, Empleado, Turno, Proveedor, Insumo, 
-    OrdenCompra, OrdenCompraItem, Carrito, ItemCarrito, Venta, 
-    DetalleVenta, Pago, Ubicacion
+    Alerta, Cliente, Direccion, Empleado, Turno, Carrito, ItemCarrito, Venta, 
+    DetalleVenta, Pago
 )
+from inventario.models import Proveedor, Insumo, OrdenCompra, OrdenCompraItem, Ubicacion
 from dj_rest_auth.serializers import JWTSerializer
 # ==========================================
 # 1. INPUT SERIALIZERS 
@@ -80,10 +80,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 class EmpleadoSerializer(serializers.ModelSerializer):
     nombre_completo = serializers.CharField(source='__str__', read_only=True)
-    cargo = serializers.ChoiceField(
-        choices=Empleado.CARGO_CHOICES, 
-        required=True 
-    )
+    
     class Meta:
         model = Empleado
         fields = '__all__'
