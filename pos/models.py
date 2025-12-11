@@ -1,20 +1,18 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import F, Sum
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from decimal import Decimal
+from django.contrib.auth.models import User
+from decimal import Decimal, ROUND_HALF_UP # Necesario para cálculos de precisión
+from datetime import date # Necesario para cálculos de fecha en Lote
+from django.utils import timezone
 
 # ==========================================
-# 1. PARAMÉTRICAS Y ACTORES GLOBALES
+# 1. MAESTROS
 # ==========================================
 
 class Ubicacion(models.Model):
-    """
-    Normalización: Lugar físico en bodega/almacén.
-    Se usa tanto para Insumos como para Lotes de Productos.
-    """
+    """Lugar físico en bodega/almacén."""
     nombre = models.CharField(max_length=100)
     descripcion = models.CharField(max_length=250, null=True, blank=True)
 
@@ -70,9 +68,12 @@ class Empleado(models.Model):
         default='Vendedor'
     )
     
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    # Asumo que el modelo User está disponible.
+    # Si Empleado hereda de User, esto debe ajustarse.
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE) 
 
     def __str__(self):
+        # Necesita que el usuario tenga first_name y last_name
         return f"{self.usuario.first_name} {self.usuario.last_name} ({self.get_cargo_display()})"
 
 class Turno(models.Model):
@@ -87,7 +88,7 @@ class Turno(models.Model):
         return f"Turno de {self.empleado} el {self.fecha}"
 
 # ==========================================
-# 2. ABASTECIMIENTO (MATERIAS PRIMAS)
+# 2. ABASTECIMIENTO (MATERIAS PRIMAS) - Sin cambios
 # ==========================================
 
 class Insumo(models.Model):
@@ -114,7 +115,6 @@ class OrdenCompra(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='ordenes')
     fecha = models.DateField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
-    # Se recomienda recalcular el total antes de guardar
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def __str__(self):
@@ -135,7 +135,7 @@ class OrdenCompraItem(models.Model):
         return self.cantidad * self.precio_unitario
 
 # ==========================================
-# 3. CATÁLOGO Y PRODUCTOS (PRODUCTO TERMINADO)
+# 3. CATÁLOGO Y PRODUCTOS (PRODUCTO TERMINADO) - MEJORADO
 # ==========================================
 
 class Categoria(models.Model):
@@ -151,6 +151,16 @@ class Producto(models.Model):
     descripcion = models.CharField(max_length=300, null=True, blank=True)
     marca = models.CharField(max_length=100, null=True, blank=True)
     precio_venta = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio Neto o Bruto según tu lógica")
+    
+    # NUEVO CAMPO: Costo Promedio para el Dashboard
+    costo_unitario = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        help_text="Costo promedio o actual del producto para análisis de rentabilidad"
+    )
+    
     tipo = models.CharField(max_length=100, null=True, blank=True)
     presentacion = models.CharField(max_length=100, null=True, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT)
@@ -170,7 +180,14 @@ class Producto(models.Model):
         return f"{self.nombre} (Stock: {self.stock_fisico})"
 
     def precio_con_iva(self, iva=Decimal('0.19')):
-        return self.precio_venta * (1 + iva)
+        # Usamos Decimal para mantener la precisión
+        precio = self.precio_venta if self.precio_venta is not None else Decimal('0')
+        result = (precio * (Decimal(1) + iva)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return result
+        
+    def stock_total(self):
+        """Suma el stock_actual de todos los lotes asociados (usado para verificación)."""
+        return sum(lote.stock_actual or 0 for lote in self.lotes.all())
 
 class Nutricional(models.Model):
     calorias = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -182,7 +199,7 @@ class Nutricional(models.Model):
     producto = models.OneToOneField(Producto, on_delete=models.CASCADE, related_name="nutricional")
 
 # ==========================================
-# 4. INVENTARIO PRODUCTOS (LOTES Y TRAZABILIDAD)
+# 4. INVENTARIO PRODUCTOS (LOTES Y TRAZABILIDAD) - MEJORADO
 # ==========================================
 
 class Lote(models.Model):
@@ -197,7 +214,7 @@ class Lote(models.Model):
     stock_inicial = models.IntegerField()
     stock_actual = models.IntegerField(default=0)
     
-    # Integración con Ubicación
+    # Integración con Ubicación (Modelo 1 original)
     ubicacion = models.ForeignKey(Ubicacion, on_delete=models.SET_NULL, null=True, blank=True, related_name='lotes')
     
     creado = models.DateTimeField(auto_now_add=True)
@@ -213,10 +230,33 @@ class Lote(models.Model):
     def esta_vencido(self):
         return self.fecha_caducidad < timezone.now().date()
     
+    def dias_para_caducar(self):
+        """Días (enteros) hasta la caducidad. Negativo si ya está vencido."""
+        if not self.fecha_caducidad:
+            return None
+        delta = self.fecha_caducidad - date.today()
+        return delta.days
+        
+    def agregar_stock(self, cantidad):
+        """Agrega stock al lote y lo persiste."""
+        if cantidad is None or cantidad <= 0:
+            raise ValueError("La cantidad a agregar debe ser mayor a 0")
+        self.stock_actual = (self.stock_actual or 0) + int(cantidad)
+        self.save(update_fields=["stock_actual"])
+        return self.stock_actual
+
+    def retirar_stock(self, cantidad):
+        """Resta stock del lote si hay suficiente; lanza ValueError si no."""
+        if cantidad is None or cantidad <= 0:
+            raise ValueError("La cantidad a retirar debe ser mayor a 0")
+        if (self.stock_actual or 0) < cantidad:
+            raise ValueError("Stock insuficiente en el lote")
+        self.stock_actual = int(self.stock_actual) - int(cantidad)
+        self.save(update_fields=["stock_actual"])
+        return self.stock_actual
+
     def save(self, *args, **kwargs):
         if self._state.adding and self.stock_actual == 0:
-            # Si es un lote nuevo y no se ha definido stock_actual,
-            # inicialízalo con stock_inicial
             self.stock_actual = self.stock_inicial
         super().save(*args, **kwargs)
 
@@ -238,7 +278,6 @@ class Alerta(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     mensaje = models.CharField(max_length=255)
     
-    # Corregido: unificado a un solo campo producto y lote
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
     lote = models.ForeignKey(Lote, on_delete=models.SET_NULL, null=True, blank=True)
     
@@ -249,7 +288,7 @@ class Alerta(models.Model):
         return f"{self.tipo}: {self.mensaje}"
 
 # ==========================================
-# 5. E-COMMERCE Y VENTAS
+# 5. E-COMMERCE Y VENTAS - MEJORADO
 # ==========================================
 
 class Carrito(models.Model):
@@ -299,6 +338,81 @@ class Venta(models.Model):
 
     def __str__(self):
         return f"Venta #{self.id} - Total: {self.total}"
+        
+    def calcular_subtotal(self):
+        """Suma cantidad * precio_unitario (sin considerar descuentos) de los detalles."""
+        # Aseguramos la suma como Decimal para precisión
+        subtotal = sum((d.cantidad * d.precio_unitario) for d in self.detalles.all())
+        return subtotal
+
+    def calcular_total_descuento(self):
+        """Suma todos los descuentos aplicados en los detalles."""
+        return sum(d.descuento for d in self.detalles.all())
+
+    def calcular_totales_desde_detalles(self, iva_rate=Decimal('0.19')):
+        """Calcula y actualiza los totales de la venta basados en sus detalles."""
+        subtotal = self.calcular_subtotal()
+        descuento = self.calcular_total_descuento()
+        
+        neto_bruto = subtotal - descuento
+        neto = neto_bruto.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        iva = (neto * iva_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        total = (neto + iva).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        
+        self.neto = neto
+        self.iva = iva
+        self.total = total
+        self.save(update_fields=["neto", "iva", "total"])
+        return {
+            "neto": neto,
+            "iva": iva,
+            "total": total,
+            "descuento": descuento
+        }
+
+    def actualizar_stock(self, usuario):
+        """
+        Actualiza el stock de los productos restando las cantidades vendidas, 
+        consumiendo lotes por fecha de caducidad ascendente (FIFO).
+        """
+        for detalle in self.detalles.all():
+            producto = detalle.producto
+            cantidad = detalle.cantidad
+            
+            # Consumir lotes por fecha de caducidad (próxima a vencer primero)
+            lotes = producto.lotes.filter(stock_actual__gt=0, eliminado__isnull=True).order_by('fecha_caducidad')
+            restante = int(cantidad)
+            
+            if restante > producto.stock_fisico:
+                 raise ValueError(f"Stock total insuficiente para producto {producto.nombre}: falta {restante}")
+                 
+            for lote in lotes:
+                if restante <= 0:
+                    break
+                
+                disponible = lote.stock_actual or 0
+                to_retirar = min(disponible, restante)
+                
+                if to_retirar > 0:
+                    # Usamos el método seguro de Lote
+                    lote.retirar_stock(to_retirar) 
+                    
+                    # Crear movimiento de salida (Kardex)
+                    MovimientoInventario.objects.create(
+                        tipo='salida',
+                        cantidad=-to_retirar, # Negativo para indicar salida
+                        lote=lote,
+                        producto=producto,
+                        referencia=f"Venta #{self.id}",
+                        usuario=usuario # El usuario que realiza la venta
+                    )
+                    restante -= to_retirar
+            
+            if restante > 0:
+                # Esto no debería pasar si la verificación inicial es correcta, pero es un seguro.
+                raise ValueError(f"Error interno: No se pudo retirar todo el stock para {producto.nombre}")
+
 
 class DetalleVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='detalles')
@@ -310,6 +424,19 @@ class DetalleVenta(models.Model):
     
     def subtotal(self):
         return (self.cantidad * self.precio_unitario) - self.descuento
+
+class GastoOperativo(models.Model):
+    """Modelo para registrar gastos fijos o variables no relacionados con insumos."""
+    nombre = models.CharField(max_length=150)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha = models.DateField(auto_now_add=True)
+    descripcion = models.CharField(max_length=250, null=True, blank=True)
+    
+    # Opcional: Relacionar con Categoría de Gastos si tienes una.
+    # categoria_gasto = models.ForeignKey(CategoriaGasto, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return f"{self.nombre} - ${self.monto}"
 
 class Pago(models.Model):
     METODO_CHOICES = [('EFE', 'Efectivo'), ('DEB', 'Débito'), ('CRE', 'Crédito'), ('TRA', 'Transferencia')]
@@ -354,31 +481,18 @@ class Pago(models.Model):
         super().save(*args, **kwargs)
 
 # ==========================================
-# 6. LÓGICA AUTOMÁTICA (SIGNALS)
+# 6. LÓGICA AUTOMÁTICA (SIGNALS) - AJUSTADA
 # ==========================================
 
 # 6.1 Actualización de Stock de Producto Terminado (Lotes)
+# SOLO se activa cuando un Lote cambia (Lote.save() llama esto).
+# MovimientoInventario ya NO activa este signal para evitar duplicidades
 @receiver(post_save, sender=Lote)
-# Desconectamos post_save de MovimientoInventario temporalmente,
-# o lo usamos SOLO para recalcular.
-@receiver(post_save, sender=MovimientoInventario) 
-def actualizar_stock_producto(sender, instance, created, **kwargs):
+def actualizar_stock_producto(sender, instance, **kwargs):
 
-    # --- Paso 1: IGNORAR MovimientoInventario si el servicio ya lo manejó ---
-    # Si la lógica de MovimientoInventario es compleja, es mejor no tocar el Lote aquí.
-    # Eliminamos el bloque del "Paso 1" que causaba la doble actualización/suma invertida.
-    
-    # Si el sender es MovimientoInventario, el producto es instance.producto
-    # Si el sender es Lote, el producto es instance.producto
-    
-    if sender.__name__ == "MovimientoInventario":
-        producto = instance.producto
-    elif sender.__name__ == "Lote":
-        producto = instance.producto
-    else:
-        return
+    producto = instance.producto
         
-    # --- Paso 2: recalcular stock del producto (Esta parte es la que funciona) ---
+    # Recalcular stock_fisico sumando stock_actual de todos los lotes activos
     total = Lote.objects.filter(producto=producto, eliminado__isnull=True).aggregate(
         total=Sum('stock_actual')
     )['total'] or 0
@@ -387,27 +501,26 @@ def actualizar_stock_producto(sender, instance, created, **kwargs):
         producto.stock_fisico = total
         producto.save(update_fields=['stock_fisico'])
 
-# 6.2 Actualización de Stock de Insumos (Orden de Compra)
+# 6.2 Actualización de Stock de Insumos (Orden de Compra) - Sin cambios
 @receiver(pre_save, sender=OrdenCompra)
 def procesar_recepcion_orden_compra(sender, instance, **kwargs):
     """
     Si una Orden de Compra cambia a estado 'recibida', sumar stock a los insumos.
-    Nota: Esto requiere manejo cuidadoso para no sumar doble si se guarda 2 veces.
-    Una mejor práctica es usar una acción de admin o servicio dedicado, pero aquí se usa signal para automatización básica.
     """
-    if instance.pk: # Si ya existe (es una actualización)
+    if instance.pk: 
         try:
             orden_anterior = OrdenCompra.objects.get(pk=instance.pk)
             # Solo si cambia de no-recibida a recibida
             if orden_anterior.estado != 'recibida' and instance.estado == 'recibida':
                 for item in instance.items.all():
                     insumo = item.insumo
-                    insumo.stock_actual = F('stock_actual') + item.cantidad
+                    # Nota: F() es mejor para evitar condiciones de carrera, pero requiere post-save en Insumo
+                    insumo.stock_actual = F('stock_actual') + item.cantidad 
                     insumo.save()
         except OrdenCompra.DoesNotExist:
             pass
 
-# 6.3 Cálculo automático de subtotales en OC Items
+# 6.3 Cálculo automático de subtotales en OC Items - Sin cambios
 @receiver(post_save, sender=OrdenCompraItem)
 def actualizar_total_orden_compra(sender, instance, **kwargs):
     """Actualiza el total de la orden cuando se agrega un item"""

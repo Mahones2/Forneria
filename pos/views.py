@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator # No usada, pero mantenida si se necesita en otras vistas.
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.db.models import Prefetch
-
+from django.db.models import Count
 # DRF Imports
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.views import APIView
@@ -107,6 +107,23 @@ class LoteViewSet(viewsets.ModelViewSet):
     serializer_class = LoteSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        """
+        Permite filtrar lotes por producto usando parámetros URL.
+        Ejemplo: /pos/api/lotes/?producto=5
+        """
+        # 1. Obtenemos el queryset base (todos los lotes)
+        queryset = Lote.objects.all()
+        
+        # 2. Buscamos si viene el parámetro 'producto' en la URL
+        producto_id = self.request.query_params.get('producto')
+        
+        # 3. Si existe el ID, filtramos la lista
+        if producto_id:
+            queryset = queryset.filter(producto_id=producto_id)
+            
+        return queryset
+
 class MovimientoInventarioViewSet(viewsets.ModelViewSet):
     queryset = MovimientoInventario.objects.all()
     serializer_class = MovimientoInventarioSerializer
@@ -149,18 +166,20 @@ class ClienteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Retorna la lista de clientes. Permite filtrar opcionalmente por 'rut' y 'nombre'.
-        Ignora los parámetros de búsqueda si están vacíos, devolviendo la lista completa.
+        Retorna clientes ordenados por cantidad de compras (VIP primero).
         """
-        queryset = Cliente.objects.all().order_by('nombre')
+        # 1. ANNOTATE: Crea el campo virtual 'total_compras'
+        # 2. ORDER_BY: Ordena descendente (-total_compras)
+        # Nota: 'venta' es el nombre en minúscula del modelo relacionado o el related_name
+        queryset = Cliente.objects.annotate(
+            total_compras=Count('venta') 
+        ).order_by('-total_compras')
         
-        # Obtener parámetros de la URL
+        # --- Lógica de Filtros (RUT y Nombre) ---
         rut_param = self.request.query_params.get('rut', None)
         nombre_param = self.request.query_params.get('nombre', None)
 
-        # Aplicar filtro SÓLO si el parámetro tiene contenido real
         if rut_param:
-            # __icontains permite búsqueda parcial insensible a mayúsculas/minúsculas
             queryset = queryset.filter(rut__icontains=rut_param)
         
         if nombre_param:

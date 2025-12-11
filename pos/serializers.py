@@ -60,8 +60,11 @@ class DireccionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ClienteSerializer(serializers.ModelSerializer):
-    direcciones = DireccionSerializer(many=True, read_only=True)
+    # Campo de solo lectura calculado en la vista
+    total_compras = serializers.IntegerField(read_only=True) 
     
+    direcciones = DireccionSerializer(many=True, read_only=True)
+
     class Meta:
         model = Cliente
         fields = '__all__'
