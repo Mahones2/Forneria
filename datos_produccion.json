@@ -1,0 +1,1869 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$FElLCLWikKJAbPzSeZjQKB$3H/c6GdLvoWXQE+QuqholfCDTdZ+sQKihm/0F4YDX0g=",
+    "last_login": "2025-12-10T02:31:40.456Z",
+    "is_superuser": true,
+    "username": "admin1",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin1@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T00:33:47.779Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$pWNq5T1d1NaUhMPOl3y5SI$mZdTaLOqm4nnPKIHdAlV1BiiQ8vaFDMOQ4eOSh/MV8A=",
+    "last_login": "2025-12-11T00:03:35.914Z",
+    "is_superuser": true,
+    "username": "admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@forneria.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T01:01:53.356Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$Q1lbXWCKrqs1eRAIZXSENC$nXcgJ04S4RvsfpyeysBqrGcZ8s80EYh43vjZeQovJyg=",
+    "last_login": "2025-12-10T05:40:16.469Z",
+    "is_superuser": true,
+    "username": "admin13",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin13@admin.cl",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T02:33:12.098Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$AffydwBnu1B7XUVMD6AiSN$K2JIzhFHcApX4JrjGHOl3GstjE9z3UTOE/23GiLVwUw=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "testuser",
+    "first_name": "",
+    "last_name": "",
+    "email": "test@test.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T23:38:06.114Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$k1lmg0XUkMTwAtUsOZ1L1g$xYjAbWPG5oTSOmDFh2rRl8BpwLVGVkDzRsaVKRHOyx4=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "admintest",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@test.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T23:52:05.706Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$rLMWQgoXiFo8JpnbsY3gqR$8adXyWnbYWORSBoeWZKcTJEDg415YVyYHeFXjipNPH4=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "testadmin",
+    "first_name": "",
+    "last_name": "",
+    "email": "test@admin.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T23:55:26.072Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$pKwq4vndzYYVP6MaAK2bcQ$FL/0mGXHamLFdvfMoTDb88XgstSV2jrE+GxPT0ahR/c=",
+    "last_login": "2025-12-11T00:01:49.813Z",
+    "is_superuser": true,
+    "username": "admin2025",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@forneria.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-10T23:57:08.227Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$lJ2gg5SD2lYq93CejBEfDq$G/0czCrFJairk+nO5dee5WRuocscKFu0Z9mu6CPYtjQ=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "test3",
+    "first_name": "",
+    "last_name": "",
+    "email": "admin@test.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2025-12-11T00:00:50.780Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 1,
+  "fields": {
+    "nombre": "Panadería",
+    "descripcion": null
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 2,
+  "fields": {
+    "nombre": "Pastelería",
+    "descripcion": null
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 3,
+  "fields": {
+    "nombre": "Bebidas",
+    "descripcion": null
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 4,
+  "fields": {
+    "nombre": "Salados",
+    "descripcion": null
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 5,
+  "fields": {
+    "nombre": "Dulces",
+    "descripcion": null
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 6,
+  "fields": {
+    "nombre": "Ensaladas",
+    "descripcion": "Ensaladas frescas"
+  }
+},
+{
+  "model": "pos.categoria",
+  "pk": 7,
+  "fields": {
+    "nombre": "Congelados",
+    "descripcion": "Productos congelados"
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 1,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Pan Marraqueta",
+    "descripcion": "Pan Marraqueta fresco del día",
+    "marca": null,
+    "precio_venta": "800.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": "400.00",
+    "stock_fisico": 20,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 2,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Pan Hallulla",
+    "descripcion": "Pan Hallulla fresco del día",
+    "marca": null,
+    "precio_venta": "900.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": "450.00",
+    "stock_fisico": 38,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 3,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Empanada de Pino",
+    "descripcion": "Empanada de Pino fresco del día",
+    "marca": null,
+    "precio_venta": "2500.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 4,
+    "costo_unitario": "1200.00",
+    "stock_fisico": 34,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 4,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Torta Chocolate",
+    "descripcion": "Torta Chocolate fresco del día",
+    "marca": null,
+    "precio_venta": "15000.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 2,
+    "costo_unitario": "7000.00",
+    "stock_fisico": 100,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 5,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Café",
+    "descripcion": "Café fresco del día",
+    "marca": null,
+    "precio_venta": "1500.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 3,
+    "costo_unitario": "500.00",
+    "stock_fisico": 96,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 6,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Jugo Natural",
+    "descripcion": "Jugo Natural fresco del día",
+    "marca": null,
+    "precio_venta": "2000.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 3,
+    "costo_unitario": "800.00",
+    "stock_fisico": 91,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 7,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Alfajor",
+    "descripcion": "Alfajor fresco del día",
+    "marca": null,
+    "precio_venta": "1200.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 5,
+    "costo_unitario": "600.00",
+    "stock_fisico": 53,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 8,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Croissant",
+    "descripcion": "Croissant fresco del día",
+    "marca": null,
+    "precio_venta": "1800.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": "900.00",
+    "stock_fisico": 54,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 9,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Queque",
+    "descripcion": "Queque fresco del día",
+    "marca": null,
+    "precio_venta": "8000.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 2,
+    "costo_unitario": "4000.00",
+    "stock_fisico": 76,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 10,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Sopaipilla",
+    "descripcion": "Sopaipilla fresco del día",
+    "marca": null,
+    "precio_venta": "600.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 4,
+    "costo_unitario": "300.00",
+    "stock_fisico": 70,
+    "stock_minimo_global": 10
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 11,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Bowl Ensalada",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "7500.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 6,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 12,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Panini Artesanal",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "4500.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 13,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Ciabata",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "3800.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 14,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Pan Integral",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "3200.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 15,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Pan de Masa Madre",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "5000.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 16,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Rollos de Canela",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "4200.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 1,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 17,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Lasagnas Caseras",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "8500.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 7,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 18,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Pastas italianas",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "6500.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 7,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.producto",
+  "pk": 19,
+  "fields": {
+    "codigo_barra": null,
+    "nombre": "Pescados y Mariscos",
+    "descripcion": null,
+    "marca": null,
+    "precio_venta": "12000.00",
+    "tipo": null,
+    "presentacion": null,
+    "categoria": 7,
+    "costo_unitario": null,
+    "stock_fisico": 100,
+    "stock_minimo_global": 5
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 1,
+  "fields": {
+    "producto": 1,
+    "numero_lote": "LOTE-1-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "400.00",
+    "stock_inicial": 20,
+    "stock_actual": 20,
+    "creado": "2025-12-10T01:55:53.710Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 2,
+  "fields": {
+    "producto": 2,
+    "numero_lote": "LOTE-2-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "450.00",
+    "stock_inicial": 38,
+    "stock_actual": 38,
+    "creado": "2025-12-10T01:55:53.720Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 3,
+  "fields": {
+    "producto": 3,
+    "numero_lote": "LOTE-3-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "1200.00",
+    "stock_inicial": 34,
+    "stock_actual": 34,
+    "creado": "2025-12-10T01:55:53.727Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 4,
+  "fields": {
+    "producto": 4,
+    "numero_lote": "LOTE-4-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "7000.00",
+    "stock_inicial": 100,
+    "stock_actual": 100,
+    "creado": "2025-12-10T01:55:53.737Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 5,
+  "fields": {
+    "producto": 5,
+    "numero_lote": "LOTE-5-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "500.00",
+    "stock_inicial": 96,
+    "stock_actual": 96,
+    "creado": "2025-12-10T01:55:53.744Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 6,
+  "fields": {
+    "producto": 6,
+    "numero_lote": "LOTE-6-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "800.00",
+    "stock_inicial": 91,
+    "stock_actual": 91,
+    "creado": "2025-12-10T01:55:53.751Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 7,
+  "fields": {
+    "producto": 7,
+    "numero_lote": "LOTE-7-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "600.00",
+    "stock_inicial": 53,
+    "stock_actual": 53,
+    "creado": "2025-12-10T01:55:53.758Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 8,
+  "fields": {
+    "producto": 8,
+    "numero_lote": "LOTE-8-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "900.00",
+    "stock_inicial": 54,
+    "stock_actual": 54,
+    "creado": "2025-12-10T01:55:53.768Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 9,
+  "fields": {
+    "producto": 9,
+    "numero_lote": "LOTE-9-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "4000.00",
+    "stock_inicial": 76,
+    "stock_actual": 76,
+    "creado": "2025-12-10T01:55:53.775Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.lote",
+  "pk": 10,
+  "fields": {
+    "producto": 10,
+    "numero_lote": "LOTE-10-001",
+    "fecha_elaboracion": "2025-12-08",
+    "fecha_caducidad": "2025-12-16",
+    "precio_costo_unitario": "300.00",
+    "stock_inicial": 70,
+    "stock_actual": 70,
+    "creado": "2025-12-10T01:55:53.783Z",
+    "eliminado": null
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 1,
+  "fields": {
+    "rut": "11111111-1",
+    "nombre": "Juan Pérez",
+    "correo": "juan@email.com",
+    "telefono": "912345678",
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 2,
+  "fields": {
+    "rut": "22222222-2",
+    "nombre": "María González",
+    "correo": "maria@email.com",
+    "telefono": "923456789",
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 3,
+  "fields": {
+    "rut": "33333333-3",
+    "nombre": "Pedro López",
+    "correo": "pedro@email.com",
+    "telefono": "934567890",
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 4,
+  "fields": {
+    "rut": "44444444-4",
+    "nombre": "Ana Martínez",
+    "correo": "ana@email.com",
+    "telefono": "945678901",
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 5,
+  "fields": {
+    "rut": "55555555-5",
+    "nombre": "Carlos Rodríguez",
+    "correo": "carlos@email.com",
+    "telefono": "956789012",
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 6,
+  "fields": {
+    "rut": "12345678-9",
+    "nombre": "Juan Pérez",
+    "correo": "juan@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 7,
+  "fields": {
+    "rut": "23456789-0",
+    "nombre": "María García",
+    "correo": "maria@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 8,
+  "fields": {
+    "rut": "34567890-1",
+    "nombre": "Carlos López",
+    "correo": "carlos@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 9,
+  "fields": {
+    "rut": "45678901-2",
+    "nombre": "Ana Martínez",
+    "correo": "ana@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 10,
+  "fields": {
+    "rut": "56789012-3",
+    "nombre": "Roberto Sánchez",
+    "correo": "roberto@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 11,
+  "fields": {
+    "rut": "67890123-4",
+    "nombre": "Laura Rodríguez",
+    "correo": "laura@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 12,
+  "fields": {
+    "rut": "78901234-5",
+    "nombre": "Francisco Torres",
+    "correo": "francisco@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 13,
+  "fields": {
+    "rut": "89012345-6",
+    "nombre": "Isabel Flores",
+    "correo": "isabel@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 14,
+  "fields": {
+    "rut": "90123456-7",
+    "nombre": "Diego Morales",
+    "correo": "diego@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.cliente",
+  "pk": 15,
+  "fields": {
+    "rut": "01234567-8",
+    "nombre": "Patricia Jiménez",
+    "correo": "patricia@example.com",
+    "telefono": null,
+    "es_empresa": false
+  }
+},
+{
+  "model": "pos.empleado",
+  "pk": 1,
+  "fields": {
+    "nombres": "Admin",
+    "apellido_paterno": "Sistema",
+    "run": "12345678-9",
+    "correo": "admin@forneria.com",
+    "fono": 987654321,
+    "clave": "admin123",
+    "direccion": "Oficina Central",
+    "cargo": "Administrador",
+    "usuario": [
+      "admin"
+    ]
+  }
+},
+{
+  "model": "pos.empleado",
+  "pk": 2,
+  "fields": {
+    "nombres": "admin1",
+    "apellido_paterno": "",
+    "run": "00000000-0",
+    "correo": "admin1@gmail.com",
+    "fono": 0,
+    "clave": "cambiar123",
+    "direccion": "Sin dirección",
+    "cargo": "Administrador",
+    "usuario": [
+      "admin1"
+    ]
+  }
+},
+{
+  "model": "pos.empleado",
+  "pk": 3,
+  "fields": {
+    "nombres": "admin13",
+    "apellido_paterno": "",
+    "run": "00000003-3",
+    "correo": "admin13@admin.cl",
+    "fono": 900000003,
+    "clave": "cambiar123",
+    "direccion": "Sin dirección",
+    "cargo": "Administrador",
+    "usuario": [
+      "admin13"
+    ]
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 317,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.751Z",
+    "cliente": 1,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "42000.00",
+    "iva": "7980.00",
+    "total": "49980.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1001"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 318,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.781Z",
+    "cliente": 2,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "15100.00",
+    "iva": "2869.00",
+    "total": "17969.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1002"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 319,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.804Z",
+    "cliente": 3,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "10800.00",
+    "iva": "2052.00",
+    "total": "12852.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1003"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 320,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.828Z",
+    "cliente": 4,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "40400.00",
+    "iva": "7676.00",
+    "total": "48076.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1004"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 321,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.861Z",
+    "cliente": 5,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "43500.00",
+    "iva": "8265.00",
+    "total": "51765.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1005"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 322,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.897Z",
+    "cliente": 6,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "65100.00",
+    "iva": "12369.00",
+    "total": "77469.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1006"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 323,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.926Z",
+    "cliente": 7,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "38100.00",
+    "iva": "7239.00",
+    "total": "45339.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1007"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 324,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.960Z",
+    "cliente": 8,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "22500.00",
+    "iva": "4275.00",
+    "total": "26775.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1008"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 325,
+  "fields": {
+    "fecha": "2025-12-10T05:50:21.977Z",
+    "cliente": 9,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "47400.00",
+    "iva": "9006.00",
+    "total": "56406.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1009"
+  }
+},
+{
+  "model": "pos.venta",
+  "pk": 326,
+  "fields": {
+    "fecha": "2025-12-10T05:50:22.001Z",
+    "cliente": 10,
+    "empleado": 1,
+    "canal_venta": "pos",
+    "direccion_despacho": null,
+    "costo_envio": "0.00",
+    "neto": "7500.00",
+    "iva": "1425.00",
+    "total": "8925.00",
+    "estado": "entregado",
+    "tipo_documento": "boleta",
+    "folio_documento": "BOL-202512-1010"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 924,
+  "fields": {
+    "venta": 317,
+    "producto": 17,
+    "cantidad": 2,
+    "precio_unitario": "8500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 925,
+  "fields": {
+    "venta": 317,
+    "producto": 18,
+    "cantidad": 2,
+    "precio_unitario": "6500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 926,
+  "fields": {
+    "venta": 317,
+    "producto": 19,
+    "cantidad": 1,
+    "precio_unitario": "12000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 927,
+  "fields": {
+    "venta": 318,
+    "producto": 11,
+    "cantidad": 1,
+    "precio_unitario": "7500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 928,
+  "fields": {
+    "venta": 318,
+    "producto": 13,
+    "cantidad": 2,
+    "precio_unitario": "3800.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 929,
+  "fields": {
+    "venta": 319,
+    "producto": 13,
+    "cantidad": 2,
+    "precio_unitario": "3800.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 930,
+  "fields": {
+    "venta": 319,
+    "producto": 14,
+    "cantidad": 1,
+    "precio_unitario": "3200.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 931,
+  "fields": {
+    "venta": 320,
+    "producto": 12,
+    "cantidad": 2,
+    "precio_unitario": "4500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 932,
+  "fields": {
+    "venta": 320,
+    "producto": 15,
+    "cantidad": 3,
+    "precio_unitario": "5000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 933,
+  "fields": {
+    "venta": 320,
+    "producto": 13,
+    "cantidad": 1,
+    "precio_unitario": "3800.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 934,
+  "fields": {
+    "venta": 320,
+    "producto": 16,
+    "cantidad": 3,
+    "precio_unitario": "4200.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 935,
+  "fields": {
+    "venta": 321,
+    "producto": 17,
+    "cantidad": 1,
+    "precio_unitario": "8500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 936,
+  "fields": {
+    "venta": 321,
+    "producto": 15,
+    "cantidad": 2,
+    "precio_unitario": "5000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 937,
+  "fields": {
+    "venta": 321,
+    "producto": 18,
+    "cantidad": 2,
+    "precio_unitario": "6500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 938,
+  "fields": {
+    "venta": 321,
+    "producto": 19,
+    "cantidad": 1,
+    "precio_unitario": "12000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 939,
+  "fields": {
+    "venta": 322,
+    "producto": 14,
+    "cantidad": 3,
+    "precio_unitario": "3200.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 940,
+  "fields": {
+    "venta": 322,
+    "producto": 19,
+    "cantidad": 3,
+    "precio_unitario": "12000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 941,
+  "fields": {
+    "venta": 322,
+    "producto": 18,
+    "cantidad": 3,
+    "precio_unitario": "6500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 942,
+  "fields": {
+    "venta": 323,
+    "producto": 12,
+    "cantidad": 1,
+    "precio_unitario": "4500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 943,
+  "fields": {
+    "venta": 323,
+    "producto": 19,
+    "cantidad": 2,
+    "precio_unitario": "12000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 944,
+  "fields": {
+    "venta": 323,
+    "producto": 14,
+    "cantidad": 3,
+    "precio_unitario": "3200.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 945,
+  "fields": {
+    "venta": 324,
+    "producto": 11,
+    "cantidad": 3,
+    "precio_unitario": "7500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 946,
+  "fields": {
+    "venta": 325,
+    "producto": 19,
+    "cantidad": 3,
+    "precio_unitario": "12000.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 947,
+  "fields": {
+    "venta": 325,
+    "producto": 13,
+    "cantidad": 3,
+    "precio_unitario": "3800.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.detalleventa",
+  "pk": 948,
+  "fields": {
+    "venta": 326,
+    "producto": 11,
+    "cantidad": 1,
+    "precio_unitario": "7500.00",
+    "descuento": "0.00"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 315,
+  "fields": {
+    "venta": 317,
+    "monto": "49980.00",
+    "metodo": "TRF",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.773Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 316,
+  "fields": {
+    "venta": 318,
+    "monto": "17969.00",
+    "metodo": "TCR",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.798Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 317,
+  "fields": {
+    "venta": 319,
+    "monto": "12852.00",
+    "metodo": "TCR",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.822Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 318,
+  "fields": {
+    "venta": 320,
+    "monto": "48076.00",
+    "metodo": "TCR",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.856Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 319,
+  "fields": {
+    "venta": 321,
+    "monto": "51765.00",
+    "metodo": "TCR",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.890Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 320,
+  "fields": {
+    "venta": 322,
+    "monto": "77469.00",
+    "metodo": "EFE",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.920Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 321,
+  "fields": {
+    "venta": 323,
+    "monto": "45339.00",
+    "metodo": "TCR",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.952Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 322,
+  "fields": {
+    "venta": 324,
+    "monto": "26775.00",
+    "metodo": "TRF",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.971Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 323,
+  "fields": {
+    "venta": 325,
+    "monto": "56406.00",
+    "metodo": "TRF",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:21.995Z"
+  }
+},
+{
+  "model": "pos.pago",
+  "pk": 324,
+  "fields": {
+    "venta": 326,
+    "monto": "8925.00",
+    "metodo": "EFE",
+    "referencia_externa": null,
+    "fecha": "2025-12-10T05:50:22.012Z"
+  }
+},
+{
+  "model": "pos.gastooperativo",
+  "pk": 1,
+  "fields": {
+    "tipo_gasto": "alquiler",
+    "descripcion": "Arriendo local",
+    "monto": "500000.00",
+    "fecha": "2025-11-29",
+    "creado": "2025-12-10T02:14:27.495Z",
+    "es_recurrente": true
+  }
+},
+{
+  "model": "pos.gastooperativo",
+  "pk": 2,
+  "fields": {
+    "tipo_gasto": "servicios",
+    "descripcion": "Luz y agua",
+    "monto": "150000.00",
+    "fecha": "2025-12-04",
+    "creado": "2025-12-10T02:14:27.500Z",
+    "es_recurrente": true
+  }
+},
+{
+  "model": "pos.gastooperativo",
+  "pk": 3,
+  "fields": {
+    "tipo_gasto": "salarios",
+    "descripcion": "Sueldos empleados",
+    "monto": "2000000.00",
+    "fecha": "2025-11-29",
+    "creado": "2025-12-10T02:14:27.506Z",
+    "es_recurrente": true
+  }
+},
+{
+  "model": "pos.gastooperativo",
+  "pk": 4,
+  "fields": {
+    "tipo_gasto": "marketing",
+    "descripcion": "Publicidad redes sociales",
+    "monto": "80000.00",
+    "fecha": "2025-11-24",
+    "creado": "2025-12-10T02:14:27.513Z",
+    "es_recurrente": false
+  }
+},
+{
+  "model": "pos.gastooperativo",
+  "pk": 5,
+  "fields": {
+    "tipo_gasto": "suministros",
+    "descripcion": "Insumos panadería",
+    "monto": "300000.00",
+    "fecha": "2025-12-01",
+    "creado": "2025-12-10T02:14:27.519Z",
+    "es_recurrente": false
+  }
+},
+{
+  "model": "pos.gastooperativo",
+  "pk": 6,
+  "fields": {
+    "tipo_gasto": "mantenimiento",
+    "descripcion": "Reparación horno",
+    "monto": "120000.00",
+    "fecha": "2025-11-27",
+    "creado": "2025-12-10T02:14:27.526Z",
+    "es_recurrente": false
+  }
+},
+{
+  "model": "inventario.proveedor",
+  "pk": 1,
+  "fields": {
+    "nombre": "Molinos Santa Marta",
+    "contacto": "Juan Pérez",
+    "correo": "ventas@molinossantamarta.cl",
+    "telefono": "+56 2 2345 6789",
+    "direccion": "Av. Industrial 1234, Santiago"
+  }
+},
+{
+  "model": "inventario.proveedor",
+  "pk": 2,
+  "fields": {
+    "nombre": "Distribuidora de Levaduras del Sur",
+    "contacto": "María González",
+    "correo": "contacto@levadurasdelsur.cl",
+    "telefono": "+56 9 8765 4321",
+    "direccion": "Calle Los Hornos 567, Temuco"
+  }
+},
+{
+  "model": "inventario.proveedor",
+  "pk": 3,
+  "fields": {
+    "nombre": "Lácteos y Derivados SpA",
+    "contacto": "Pedro Ramírez",
+    "correo": "pedidos@lacteosyderivados.cl",
+    "telefono": "+56 2 2987 6543",
+    "direccion": "Camino Rural 890, Osorno"
+  }
+},
+{
+  "model": "inventario.proveedor",
+  "pk": 4,
+  "fields": {
+    "nombre": "Dulces y Endulzantes Ltda",
+    "contacto": "Ana Martínez",
+    "correo": "ventas@dulcesendulzantes.cl",
+    "telefono": "+56 9 5555 1234",
+    "direccion": "Av. Central 456, Valparaíso"
+  }
+},
+{
+  "model": "inventario.proveedor",
+  "pk": 5,
+  "fields": {
+    "nombre": "Distribuidora de Huevos Premium",
+    "contacto": "Carlos López",
+    "correo": "info@huevospremium.cl",
+    "telefono": "+56 9 6666 7890",
+    "direccion": "Ruta 5 Sur Km 45, Chillán"
+  }
+},
+{
+  "model": "inventario.ubicacion",
+  "pk": 1,
+  "fields": {
+    "nombre": "Bodega Principal",
+    "descripcion": "Almacén principal de insumos secos"
+  }
+},
+{
+  "model": "inventario.ubicacion",
+  "pk": 2,
+  "fields": {
+    "nombre": "Cámara Fría",
+    "descripcion": "Refrigeración para productos perecederos"
+  }
+},
+{
+  "model": "inventario.ubicacion",
+  "pk": 3,
+  "fields": {
+    "nombre": "Área de Producción",
+    "descripcion": "Espacio de trabajo y elaboración"
+  }
+},
+{
+  "model": "inventario.ubicacion",
+  "pk": 4,
+  "fields": {
+    "nombre": "Estantería A1",
+    "descripcion": "Harinas y cereales"
+  }
+},
+{
+  "model": "inventario.ubicacion",
+  "pk": 5,
+  "fields": {
+    "nombre": "Estantería A2",
+    "descripcion": "Azúcares y endulzantes"
+  }
+},
+{
+  "model": "inventario.ubicacion",
+  "pk": 6,
+  "fields": {
+    "nombre": "Estantería B1",
+    "descripcion": "Levaduras y mejoradores"
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 1,
+  "fields": {
+    "nombre": "Harina de Trigo 000",
+    "descripcion": "Harina de trigo para pan y pastelería",
+    "unidad_medida": "kg",
+    "stock_actual": "150.00",
+    "stock_minimo": "50.00",
+    "proveedor": 1,
+    "ubicacion": 4
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 2,
+  "fields": {
+    "nombre": "Harina Integral",
+    "descripcion": "Harina de trigo integral",
+    "unidad_medida": "kg",
+    "stock_actual": "80.00",
+    "stock_minimo": "30.00",
+    "proveedor": 1,
+    "ubicacion": 4
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 3,
+  "fields": {
+    "nombre": "Levadura Fresca",
+    "descripcion": "Levadura fresca para panificación",
+    "unidad_medida": "kg",
+    "stock_actual": "25.00",
+    "stock_minimo": "10.00",
+    "proveedor": 2,
+    "ubicacion": 2
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 4,
+  "fields": {
+    "nombre": "Levadura Seca Instantánea",
+    "descripcion": "Levadura seca de activación rápida",
+    "unidad_medida": "kg",
+    "stock_actual": "15.00",
+    "stock_minimo": "5.00",
+    "proveedor": 2,
+    "ubicacion": 6
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 5,
+  "fields": {
+    "nombre": "Azúcar Blanca",
+    "descripcion": "Azúcar refinada granulada",
+    "unidad_medida": "kg",
+    "stock_actual": "120.00",
+    "stock_minimo": "40.00",
+    "proveedor": 4,
+    "ubicacion": 5
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 6,
+  "fields": {
+    "nombre": "Azúcar Rubia",
+    "descripcion": "Azúcar sin refinar",
+    "unidad_medida": "kg",
+    "stock_actual": "60.00",
+    "stock_minimo": "20.00",
+    "proveedor": 4,
+    "ubicacion": 5
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 7,
+  "fields": {
+    "nombre": "Sal Fina",
+    "descripcion": "Sal de mesa refinada",
+    "unidad_medida": "kg",
+    "stock_actual": "45.00",
+    "stock_minimo": "15.00",
+    "proveedor": 4,
+    "ubicacion": 5
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 8,
+  "fields": {
+    "nombre": "Mantequilla",
+    "descripcion": "Mantequilla con sal 82% grasa",
+    "unidad_medida": "kg",
+    "stock_actual": "35.00",
+    "stock_minimo": "15.00",
+    "proveedor": 3,
+    "ubicacion": 2
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 9,
+  "fields": {
+    "nombre": "Leche Entera",
+    "descripcion": "Leche fresca entera",
+    "unidad_medida": "litros",
+    "stock_actual": "100.00",
+    "stock_minimo": "40.00",
+    "proveedor": 3,
+    "ubicacion": 2
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 10,
+  "fields": {
+    "nombre": "Huevos",
+    "descripcion": "Huevos frescos de campo",
+    "unidad_medida": "unidades",
+    "stock_actual": "500.00",
+    "stock_minimo": "200.00",
+    "proveedor": 5,
+    "ubicacion": 2
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 11,
+  "fields": {
+    "nombre": "Chocolate en Polvo",
+    "descripcion": "Cacao en polvo 100%",
+    "unidad_medida": "kg",
+    "stock_actual": "20.00",
+    "stock_minimo": "8.00",
+    "proveedor": 4,
+    "ubicacion": 5
+  }
+},
+{
+  "model": "inventario.insumo",
+  "pk": 12,
+  "fields": {
+    "nombre": "Esencia de Vainilla",
+    "descripcion": "Extracto natural de vainilla",
+    "unidad_medida": "ml",
+    "stock_actual": "2000.00",
+    "stock_minimo": "500.00",
+    "proveedor": 4,
+    "ubicacion": 1
+  }
+},
+{
+  "model": "inventario.ordencompra",
+  "pk": 1,
+  "fields": {
+    "proveedor": 1,
+    "fecha": "2025-12-10",
+    "estado": "recibida",
+    "total": "132500.00"
+  }
+},
+{
+  "model": "inventario.ordencompra",
+  "pk": 2,
+  "fields": {
+    "proveedor": 2,
+    "fecha": "2025-12-10",
+    "estado": "recibida",
+    "total": "112000.00"
+  }
+},
+{
+  "model": "inventario.ordencompra",
+  "pk": 3,
+  "fields": {
+    "proveedor": 3,
+    "fecha": "2025-12-10",
+    "estado": "pendiente",
+    "total": "203000.00"
+  }
+},
+{
+  "model": "inventario.ordencompraitem",
+  "pk": 1,
+  "fields": {
+    "orden": 1,
+    "insumo": 1,
+    "cantidad": "100.00",
+    "precio_unitario": "850.00"
+  }
+},
+{
+  "model": "inventario.ordencompraitem",
+  "pk": 2,
+  "fields": {
+    "orden": 1,
+    "insumo": 2,
+    "cantidad": "50.00",
+    "precio_unitario": "950.00"
+  }
+},
+{
+  "model": "inventario.ordencompraitem",
+  "pk": 3,
+  "fields": {
+    "orden": 2,
+    "insumo": 3,
+    "cantidad": "20.00",
+    "precio_unitario": "3500.00"
+  }
+},
+{
+  "model": "inventario.ordencompraitem",
+  "pk": 4,
+  "fields": {
+    "orden": 2,
+    "insumo": 4,
+    "cantidad": "10.00",
+    "precio_unitario": "4200.00"
+  }
+},
+{
+  "model": "inventario.ordencompraitem",
+  "pk": 5,
+  "fields": {
+    "orden": 3,
+    "insumo": 8,
+    "cantidad": "30.00",
+    "precio_unitario": "4500.00"
+  }
+},
+{
+  "model": "inventario.ordencompraitem",
+  "pk": 6,
+  "fields": {
+    "orden": 3,
+    "insumo": 9,
+    "cantidad": "80.00",
+    "precio_unitario": "850.00"
+  }
+}
+]
