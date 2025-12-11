@@ -51,10 +51,16 @@ for prod_data in productos_data:
         nombre=prod_data['nombre'],
         defaults={
             'precio_venta': Decimal(prod_data['precio']),
+            'costo_unitario': Decimal(prod_data['precio']) * Decimal('0.6'),  # 60% del precio
             'stock_fisico': 0,  # Se calculará automáticamente desde los lotes
             'categoria': cat
         }
     )
+    # Si ya existe pero no tiene costo_unitario, agregarlo
+    if not created and not prod.costo_unitario:
+        prod.costo_unitario = Decimal(prod_data['precio']) * Decimal('0.6')
+        prod.save(update_fields=['costo_unitario'])
+
     print(f'{"✅ Creado" if created else "⏭️  Ya existe"} producto: {prod.nombre} - ${prod.precio_venta}')
 
     # Crear lote inicial si no tiene lotes
