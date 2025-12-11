@@ -48,29 +48,67 @@ class DashboardFinancieroView(APIView):
         fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
         fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
         
+        # Inicializar con valores por defecto
+        kpis = {}
+        resumen = {}
+        ventas_diarias = None
+        productos_top = []
+        ventas_categoria = None
+        ventas_canal = []
+        clientes_top = []
+        utilidad_bruta = None
+        productos_rentables = []
+        
         try:
             # Obtener todas las métricas usando los servicios existentes
-            kpis = FinanzasMetrics.kpis_hoy()
-            resumen = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
-            ventas_diarias = FinanzasMetrics.ventas_diarias(fecha_inicio, fecha_fin)
-            productos_top = FinanzasMetrics.productos_top(fecha_inicio, fecha_fin, limite=10)
-            ventas_categoria = FinanzasMetrics.ventas_por_categoria(fecha_inicio, fecha_fin)
-            ventas_canal = FinanzasMetrics.ventas_por_canal(fecha_inicio, fecha_fin)
-            clientes_top = FinanzasMetrics.clientes_top(fecha_inicio, fecha_fin, limite=10)
-            utilidad_bruta = FinanzasMetrics.calcular_utilidad_bruta(fecha_inicio, fecha_fin)
-            productos_rentables = FinanzasMetrics.productos_rentables(fecha_inicio, fecha_fin, limite=10)
+            try:
+                kpis = FinanzasMetrics.kpis_hoy()
+            except Exception as e:
+                print(f"Error en kpis_hoy: {e}")
+            
+            try:
+                resumen = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
+            except Exception as e:
+                print(f"Error en resumen_periodo: {e}")
+            
+            try:
+                ventas_diarias = FinanzasMetrics.ventas_diarias(fecha_inicio, fecha_fin)
+            except Exception as e:
+                print(f"Error en ventas_diarias: {e}")
+            
+            try:
+                productos_top = FinanzasMetrics.productos_top(fecha_inicio, fecha_fin, limite=10)
+            except Exception as e:
+                print(f"Error en productos_top: {e}")
+            
+            try:
+                ventas_categoria = FinanzasMetrics.ventas_por_categoria(fecha_inicio, fecha_fin)
+            except Exception as e:
+                print(f"Error en ventas_por_categoria: {e}")
+            
+            try:
+                ventas_canal = FinanzasMetrics.ventas_por_canal(fecha_inicio, fecha_fin)
+            except Exception as e:
+                print(f"Error en ventas_por_canal: {e}")
+            
+            try:
+                clientes_top = FinanzasMetrics.clientes_top(fecha_inicio, fecha_fin, limite=10)
+            except Exception as e:
+                print(f"Error en clientes_top: {e}")
+            
+            try:
+                utilidad_bruta = FinanzasMetrics.calcular_utilidad_bruta(fecha_inicio, fecha_fin)
+            except Exception as e:
+                print(f"Error en calcular_utilidad_bruta: {e}")
+            
+            try:
+                productos_rentables = FinanzasMetrics.productos_rentables(fecha_inicio, fecha_fin, limite=10)
+            except Exception as e:
+                print(f"Error en productos_rentables: {e}")
             
         except Exception as e:
-            # En caso de error, devolver estructura básica
-            kpis = {}
-            resumen = {}
-            ventas_diarias = None
-            productos_top = []
-            ventas_categoria = None
-            ventas_canal = []
-            clientes_top = []
-            utilidad_bruta = None
-            productos_rentables = []
+            import traceback
+            print(f"Error general en DashboardFinancieroView: {traceback.format_exc()}")
 
         data = {
             # Datos básicos

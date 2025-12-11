@@ -174,35 +174,102 @@ def dashboard_inventario_api(request):
         else:
             return obj
 
-    # Obtener todas las métricas
-    kpis = clean_for_json(InventarioMetrics.kpis_generales())
-    productos_bajo = clean_for_json(InventarioMetrics.productos_stock_bajo(limite=10))
-    productos_vencer = clean_for_json(InventarioMetrics.productos_proximos_vencer(dias=7, limite=10))
-    productos_vencidos = clean_for_json(InventarioMetrics.productos_vencidos())
-    insumos_bajo = clean_for_json(InventarioMetrics.insumos_stock_bajo(limite=10))
-    
-    ordenes_pendientes = clean_for_json(InventarioMetrics.ordenes_compra_pendientes())
-    
-    stock_categoria = clean_for_json(InventarioMetrics.stock_por_categoria())
-    movimientos = clean_for_json(InventarioMetrics.movimientos_inventario(fecha_inicio, fecha_fin))
-    compras_proveedor = clean_for_json(InventarioMetrics.compras_por_proveedor(fecha_inicio, fecha_fin))
-    valorizacion = clean_for_json(InventarioMetrics.valorizacion_por_categoria())
-    rotacion = clean_for_json(InventarioMetrics.rotacion_inventario(fecha_inicio, fecha_fin))
-    productos_movimiento = clean_for_json(InventarioMetrics.productos_mas_movimiento(fecha_inicio, fecha_fin, limite=10))
+    try:
+        # Obtener todas las métricas con manejo de errores individual
+        try:
+            kpis = clean_for_json(InventarioMetrics.kpis_generales())
+        except Exception as e:
+            print(f"Error en kpis_generales: {e}")
+            kpis = {}
+        
+        try:
+            productos_bajo = clean_for_json(InventarioMetrics.productos_stock_bajo(limite=10))
+        except Exception as e:
+            print(f"Error en productos_stock_bajo: {e}")
+            productos_bajo = []
+        
+        try:
+            productos_vencer = clean_for_json(InventarioMetrics.productos_proximos_vencer(dias=7, limite=10))
+        except Exception as e:
+            print(f"Error en productos_proximos_vencer: {e}")
+            productos_vencer = []
+        
+        try:
+            productos_vencidos = clean_for_json(InventarioMetrics.productos_vencidos())
+        except Exception as e:
+            print(f"Error en productos_vencidos: {e}")
+            productos_vencidos = {}
+        
+        try:
+            insumos_bajo = clean_for_json(InventarioMetrics.insumos_stock_bajo(limite=10))
+        except Exception as e:
+            print(f"Error en insumos_stock_bajo: {e}")
+            insumos_bajo = []
+        
+        try:
+            ordenes_pendientes = clean_for_json(InventarioMetrics.ordenes_compra_pendientes())
+        except Exception as e:
+            print(f"Error en ordenes_compra_pendientes: {e}")
+            ordenes_pendientes = {}
+        
+        try:
+            stock_categoria = clean_for_json(InventarioMetrics.stock_por_categoria())
+        except Exception as e:
+            print(f"Error en stock_por_categoria: {e}")
+            stock_categoria = {}
+        
+        try:
+            movimientos = clean_for_json(InventarioMetrics.movimientos_inventario(fecha_inicio, fecha_fin))
+        except Exception as e:
+            print(f"Error en movimientos_inventario: {e}")
+            movimientos = {}
+        
+        try:
+            compras_proveedor = clean_for_json(InventarioMetrics.compras_por_proveedor(fecha_inicio, fecha_fin))
+        except Exception as e:
+            print(f"Error en compras_por_proveedor: {e}")
+            compras_proveedor = {}
+        
+        try:
+            valorizacion = clean_for_json(InventarioMetrics.valorizacion_por_categoria())
+        except Exception as e:
+            print(f"Error en valorizacion_por_categoria: {e}")
+            valorizacion = {}
+        
+        try:
+            rotacion = clean_for_json(InventarioMetrics.rotacion_inventario(fecha_inicio, fecha_fin))
+        except Exception as e:
+            print(f"Error en rotacion_inventario: {e}")
+            rotacion = {}
+        
+        try:
+            productos_movimiento = clean_for_json(InventarioMetrics.productos_mas_movimiento(fecha_inicio, fecha_fin, limite=10))
+        except Exception as e:
+            print(f"Error en productos_mas_movimiento: {e}")
+            productos_movimiento = []
 
-    response_data = {
-        'kpis': kpis,
-        'productos_bajo_stock': productos_bajo,
-        'productos_vencer': productos_vencer,
-        'productos_vencidos': productos_vencidos,
-        'insumos_bajo_stock': insumos_bajo,
-        'ordenes_pendientes': ordenes_pendientes,
-        'stock_categoria': stock_categoria,
-        'movimientos': movimientos,
-        'compras_proveedor': compras_proveedor,
-        'valorizacion': valorizacion,
-        'rotacion': rotacion,
-        'productos_movimiento': productos_movimiento
-    }
+        response_data = {
+            'kpis': kpis,
+            'productos_bajo_stock': productos_bajo,
+            'productos_vencer': productos_vencer,
+            'productos_vencidos': productos_vencidos,
+            'insumos_bajo_stock': insumos_bajo,
+            'ordenes_pendientes': ordenes_pendientes,
+            'stock_categoria': stock_categoria,
+            'movimientos': movimientos,
+            'compras_proveedor': compras_proveedor,
+            'valorizacion': valorizacion,
+            'rotacion': rotacion,
+            'productos_movimiento': productos_movimiento
+        }
 
-    return Response(response_data)
+        return Response(response_data)
+    
+    except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"Error general en dashboard_inventario_api: {error_detail}")
+        return Response(
+            {'error': str(e), 'detail': error_detail},
+            status=500
+        )
