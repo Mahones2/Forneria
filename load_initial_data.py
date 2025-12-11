@@ -70,8 +70,8 @@ for cli_data in clientes_data:
         rut=cli_data['rut'],
         defaults={
             'nombre': cli_data['nombre'],
-            'email': cli_data['email'],
-            'fono': '+56900000000'
+            'correo': cli_data['email'],
+            'telefono': '+56900000000'
         }
     )
     print(f'{"✅ Creado" if created else "⏭️  Ya existe"} cliente: {cli.nombre}')
