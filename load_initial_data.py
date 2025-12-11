@@ -49,12 +49,12 @@ for prod_data in productos_data:
     prod, created = Producto.objects.get_or_create(
         nombre=prod_data['nombre'],
         defaults={
-            'precio': Decimal(prod_data['precio']),
-            'stock_actual': prod_data['stock'],
+            'precio_venta': Decimal(prod_data['precio']),
+            'stock_fisico': prod_data['stock'],
             'categoria': cat
         }
     )
-    print(f'{"✅ Creado" if created else "⏭️  Ya existe"} producto: {prod.nombre} - ${prod.precio}')
+    print(f'{"✅ Creado" if created else "⏭️  Ya existe"} producto: {prod.nombre} - ${prod.precio_venta}')
 
 # Crear clientes de ejemplo
 clientes_data = [
