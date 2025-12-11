@@ -159,6 +159,10 @@ def dashboard_inventario_api(request):
     GET /dashboard/inventario/
     Endpoint API para el frontend - retorna datos del dashboard de inventario
     """
+    # Parsear filtros de fecha desde request
+    fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+    fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+
     # Helper function to convert Decimal to float
     def clean_for_json(obj):
         if isinstance(obj, dict):
@@ -175,18 +179,30 @@ def dashboard_inventario_api(request):
     productos_bajo = clean_for_json(InventarioMetrics.productos_stock_bajo(limite=10))
     productos_vencer = clean_for_json(InventarioMetrics.productos_proximos_vencer(dias=7, limite=10))
     productos_vencidos = clean_for_json(InventarioMetrics.productos_vencidos())
+    insumos_bajo = clean_for_json(InventarioMetrics.insumos_stock_bajo(limite=10))
+    
+    ordenes_pendientes = clean_for_json(InventarioMetrics.ordenes_compra_pendientes())
+    
     stock_categoria = clean_for_json(InventarioMetrics.stock_por_categoria())
-    movimientos = clean_for_json(InventarioMetrics.movimientos_inventario())
-    compras_proveedor = clean_for_json(InventarioMetrics.compras_por_proveedor())
+    movimientos = clean_for_json(InventarioMetrics.movimientos_inventario(fecha_inicio, fecha_fin))
+    compras_proveedor = clean_for_json(InventarioMetrics.compras_por_proveedor(fecha_inicio, fecha_fin))
+    valorizacion = clean_for_json(InventarioMetrics.valorizacion_por_categoria())
+    rotacion = clean_for_json(InventarioMetrics.rotacion_inventario(fecha_inicio, fecha_fin))
+    productos_movimiento = clean_for_json(InventarioMetrics.productos_mas_movimiento(fecha_inicio, fecha_fin, limite=10))
 
     response_data = {
         'kpis': kpis,
         'productos_bajo_stock': productos_bajo,
         'productos_vencer': productos_vencer,
         'productos_vencidos': productos_vencidos,
+        'insumos_bajo_stock': insumos_bajo,
+        'ordenes_pendientes': ordenes_pendientes,
         'stock_categoria': stock_categoria,
         'movimientos': movimientos,
-        'compras_proveedor': compras_proveedor
+        'compras_proveedor': compras_proveedor,
+        'valorizacion': valorizacion,
+        'rotacion': rotacion,
+        'productos_movimiento': productos_movimiento
     }
 
     return Response(response_data)
