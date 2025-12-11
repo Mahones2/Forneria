@@ -17,7 +17,25 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-2hvq+3_ztv+_dsrnw%b)&a$s&&0yqb!@p3d!)in(d&-_s-oip^')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# ALLOWED_HOSTS - Limpiar espacios y permitir subdominios de Render
+allowed_hosts_str = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')]
+
+# Agregar *.onrender.com si no está ya incluido
+if not any('.onrender.com' in host for host in ALLOWED_HOSTS):
+    ALLOWED_HOSTS.append('.onrender.com')
+
+# CSRF Trusted Origins - Para formularios y peticiones POST
+CSRF_TRUSTED_ORIGINS = []
+csrf_origins_str = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if csrf_origins_str:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_str.split(',')]
+
+# Agregar automáticamente el dominio de Render si está en ALLOWED_HOSTS
+render_host = os.environ.get('RENDER_EXTERNAL_URL', '')
+if render_host and render_host not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(render_host)
 
 # CORS - Permitir localhost para desarrollo y dominio de Vercel para producción
 CORS_ALLOWED_ORIGINS = [
