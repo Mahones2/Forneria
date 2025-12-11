@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+import dj_database_url
 
 # ==========================================
 # 1. PATHS DE PROYECTO
@@ -14,14 +15,24 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 # 2. SEGURIDAD Y DEPURACIÓN (SECURITY & DEBUG)
 # ==========================================
 
-SECRET_KEY = 'django-insecure-2hvq+3_ztv+_dsrnw%b)&a$s&&0yqb!@p3d!)in(d&-_s-oip^'
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-2hvq+3_ztv+_dsrnw%b)&a$s&&0yqb!@p3d!)in(d&-_s-oip^')
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# CORS - Permitir localhost para desarrollo y dominio de Vercel para producción
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vite
-    "http://localhost:3000",  # CRA
+    "http://localhost:5173",  # Vite desarrollo
+    "http://localhost:3000",  # CRA desarrollo
 ]
+
+# Agregar dominio de Vercel si está configurado
+VERCEL_URL = os.environ.get('VERCEL_URL', '')
+if VERCEL_URL:
+    CORS_ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
+
+# Permitir todos los orígenes en producción si CORS_ALLOW_ALL está activado
+if os.environ.get('CORS_ALLOW_ALL', 'False') == 'True':
+    CORS_ALLOW_ALL_ORIGINS = True
 
 
 # ==========================================
@@ -57,6 +68,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Para servir archivos estáticos en producción
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -90,15 +102,25 @@ TEMPLATES = [
 
 
 # ==========================================
-# 6. BASE DE DATOS (DATABASE) -> SQLITE
+# 6. BASE DE DATOS (DATABASE)
 # ==========================================
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Usar PostgreSQL en producción (Railway), SQLite en desarrollo
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Producción - PostgreSQL desde Railway
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
     }
-}
+else:
+    # Desarrollo - SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # ==========================================
@@ -128,7 +150,12 @@ USE_TZ = True
 # ==========================================
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Para producción (collectstatic)
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
+
+# Configuración de WhiteNoise para comprimir y cachear archivos estáticos
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 

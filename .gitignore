@@ -1,6 +1,7 @@
 # Entorno virtual
 env/
 .env/
+.env
 
 # Archivos de Django
 *.log
@@ -10,6 +11,8 @@ env/
 *.pyd
 __pycache__/
 db.sqlite3
+staticfiles/
+media/
 
 # Archivos de migraciones
 */migrations/__pycache__/
