@@ -20,9 +20,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 # Módulos Locales: Modelos
 from .models import (
     Categoria, Nutricional, Lote, Producto, Alerta, Cliente, Direccion, Empleado, Turno,
-    Carrito, ItemCarrito, Venta, DetalleVenta, Pago, MovimientoInventario,
-    Ubicacion, Proveedor, Insumo, OrdenCompra, OrdenCompraItem
+    Carrito, ItemCarrito, Venta, DetalleVenta, Pago, MovimientoInventario
 )
+from inventario.models import Ubicacion, Proveedor, Insumo, OrdenCompra, OrdenCompraItem
 
 # Módulos Locales: Serializers (Asegúrate de que VentaInputSerializer existe en serializers.py)
 from .serializers import (
@@ -306,6 +306,7 @@ class DireccionViewSet(viewsets.ModelViewSet):
     """
     CRUD para las direcciones de un cliente, restringido al dueño.
     """
+    queryset = Direccion.objects.all()
     serializer_class = DireccionSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     

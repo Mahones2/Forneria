@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path,include
+from inventario import views as inventario_views
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -8,6 +9,8 @@ from drf_spectacular.views import (
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('dj_rest_auth.urls')),  
+    path('analytics/', include('analytics.urls')),
+    path('dashboard/inventario/', inventario_views.dashboard_inventario_api, name='dashboard-inventario-api'),
     path('inventario/', include('inventario.urls')),
     path('pedidos/', include('pedido.urls')),
     path('pos/', include('pos.urls')),

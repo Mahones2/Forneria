@@ -96,21 +96,15 @@ for i, cliente in enumerate(clientes[:10]):
     
     # Crear pago
     metodo = random.choice(metodos_pago)
-    if metodo == 'EFE':
-        # Efectivo: calcular vuelto
-        monto_recibido = (total + Decimal('1000')).quantize(Decimal('0'))
-        vuelto = monto_recibido - total
-    else:
-        # Tarjeta/Transferencia: monto exacto
-        monto_recibido = total
-        vuelto = Decimal('0')
+    referencia = None
+    if metodo in ['DEB', 'CRE', 'TRA']:
+        referencia = f"REF{random.randint(100000, 999999)}"
     
     Pago.objects.create(
         venta=venta,
         monto=total,
         metodo=metodo,
-        monto_recibido=monto_recibido,
-        vuelto=vuelto,
+        referencia_externa=referencia,
     )
     
     productos_nombres = ', '.join([d['producto'].nombre for d in detalles])

@@ -1,69 +1,60 @@
-from django.urls import path, include
+from django.urls import path,include
+from django.contrib.auth.decorators import login_required
 from rest_framework.routers import DefaultRouter
-from . import views
 from dj_rest_auth.views import LoginView, LogoutView
-from rest_framework_simplejwt.views import TokenRefreshView
-from .views import EmpleadoDetailView
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from . import views
 
 router = DefaultRouter()
 
-# 1. Catálogo
+# Catálogo e Inventario
 router.register(r'categorias', views.CategoriaViewSet)
-router.register(r'productos', views.ProductoViewSet)
-router.register(r'nutricional', views.NutricionalViewSet)
-
-# 2. Inventario y Lotes
-router.register(r'ubicaciones', views.UbicacionViewSet)
+router.register(r'nutricionales', views.NutricionalViewSet)
 router.register(r'lotes', views.LoteViewSet)
-router.register(r'movimientos', views.MovimientoInventarioViewSet)
+router.register(r'productos', views.ProductoViewSet)
 router.register(r'alertas', views.AlertaViewSet)
 
-# 3. Abastecimiento
-router.register(r'proveedores', views.ProveedorViewSet)
-router.register(r'insumos', views.InsumoViewSet)
-router.register(r'ordenes-compra', views.OrdenCompraViewSet)
-router.register(r'ordenes-compra-items', views.OrdenCompraItemViewSet)
-
-# 4. Actores
+# Actores y Logística
 router.register(r'clientes', views.ClienteViewSet)
-router.register(r'direcciones', views.DireccionViewSet, basename='direccion')
+router.register(r'direcciones', views.DireccionViewSet, basename='direccion') # para gestionar direcciones del cliente
 router.register(r'empleados', views.EmpleadoViewSet)
 router.register(r'turnos', views.TurnoViewSet)
 
-# 5. Ventas
-router.register(r'carritos', views.CarritoViewSet, basename='carrito')
-router.register(r'items-carrito', views.ItemCarritoViewSet)
+# E-commerce y Ventas
+router.register(r'carrito', views.CarritoViewSet) # para la gestión del carrito
 router.register(r'ventas', views.VentaViewSet)
-router.register(r'detalles-venta', views.DetalleVentaViewSet)
 router.register(r'pagos', views.PagoViewSet)
+router.register(r'detalle-ventas', views.DetalleVentaViewSet)
+
+# Trazabilidad
+router.register(r'movimientos-inventario', views.MovimientoInventarioViewSet)
 
 urlpatterns = [
-    # CRUDs
+    # COMENTADAS: Vistas de UI tradicional que no existen en la rama nico
+    # path('checkout/', views.checkout, name='checkout'),
+    # path("sistema/", login_required(views.inicio), name='inicio'),
+    # path("dashboard/", login_required(views.dashboard_principal), name='dashboard'),
+    # path("dashboard/simple/", login_required(views.dashboard), name='dashboard-simple'),
+    # path("ventas/", login_required(views.ventas_page), name='ventas'),
+    # path("inventario/", login_required(views.inventario_page), name='inventario'),
+    # path("inventario/producto/create/", login_required(views.producto_create), name='producto_create'),
+    # path("inventario/producto/<int:pk>/edit/", login_required(views.producto_edit), name='producto_edit'),
+    # path("inventario/producto/<int:pk>/delete/", login_required(views.producto_delete), name='producto_delete'),
+    # path("inventario/producto/<int:product_id>/lotes/", login_required(views.product_lotes), name='product_lotes'),
+    # path("inventario/producto/<int:product_id>/lotes/create/", login_required(views.lote_create), name='lote_create_product'),
+    # path("inventario/lote/<int:pk>/edit/", login_required(views.lote_edit), name='lote_edit'),
+    # path("inventario/lote/<int:pk>/delete/", login_required(views.lote_delete), name='lote_delete'),
+    # path("pedidos/", login_required(views.pedidos_page), name='pedidos'),
+    # path("clientes/", login_required(views.clientes_page), name='clientes'),
+    # path("clientes/<str:rut>/", login_required(views.cliente_detail), name='cliente_detail'),
+    # path("metricas-ventas/", login_required(views.reportes_page), name='metricas-ventas'),
+    
+    # API REST (router)
     path('api/', include(router.urls)),
 
-    
-    
-    # Autenticación
+    # Rutas de autenticación (dj-rest-auth)
     path('api/auth/login/', LoginView.as_view(), name='rest_login'),
     path('api/auth/logout/', LogoutView.as_view(), name='rest_logout'),
-    path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
-    # Empleado autenticado
-    path('me/', EmpleadoDetailView.as_view(), name='empleado-detail'),
-
-    # Ventas y reportes
-    path('api/vender/', views.VentaCreateAPIView.as_view(), name='venta-crear-segura'),
-    path('api/reportes/stock-bajo/', views.ProductosStockBajoList.as_view(), name='reporte-stock-bajo'),
-
-
-    # Documentacion, aqui ven toda la informacion sobre las api disponibles, es automatico
-    # Endpoint que devuelve el esquema OpenAPI en formato JSON
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-
-    # Interfaz Swagger UI
-    path("api/schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-
-    # Interfaz Redoc
-    path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    # Rutas para reportes
+    path('reportes/stock-bajo/', views.ProductosStockBajoList.as_view(), name='reporte-stock-bajo'),
 ]
