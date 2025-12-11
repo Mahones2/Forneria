@@ -9,8 +9,9 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'forneria.settings')
 django.setup()
 
-from pos.models import Producto, Cliente, Categoria
+from pos.models import Producto, Cliente, Categoria, Lote
 from decimal import Decimal
+from datetime import date, timedelta
 
 print('🔧 Cargando datos iniciales...')
 
@@ -50,11 +51,26 @@ for prod_data in productos_data:
         nombre=prod_data['nombre'],
         defaults={
             'precio_venta': Decimal(prod_data['precio']),
-            'stock_fisico': prod_data['stock'],
+            'stock_fisico': 0,  # Se calculará automáticamente desde los lotes
             'categoria': cat
         }
     )
     print(f'{"✅ Creado" if created else "⏭️  Ya existe"} producto: {prod.nombre} - ${prod.precio_venta}')
+
+    # Crear lote inicial si no tiene lotes
+    if not prod.lotes.exists():
+        lote = Lote.objects.create(
+            producto=prod,
+            numero_lote=f'LOTE-{prod.id}-001',
+            fecha_elaboracion=date.today(),
+            fecha_caducidad=date.today() + timedelta(days=180),  # 6 meses
+            precio_costo_unitario=Decimal(prod_data['precio']) * Decimal('0.6'),  # 60% del precio de venta
+            stock_inicial=prod_data['stock'],
+            stock_actual=prod_data['stock']
+        )
+        print(f'  📦 Lote creado: {lote.numero_lote} con {lote.stock_actual} unidades')
+    else:
+        print(f'  ⏭️  Producto ya tiene lotes')
 
 # Crear clientes de ejemplo
 clientes_data = [
