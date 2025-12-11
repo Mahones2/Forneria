@@ -28,60 +28,82 @@ from .serializers import (
 )
 
 
-class DashboardFinancieroView(APIView):
-    """
-    Vista consolidada que devuelve todos los datos del dashboard en una sola llamada.
-    """
-    authentication_classes = [JWTAuthentication] # Lo mantienes
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        # 1. Obtener datos (puedes conectar esto con tu lógica real paso a paso)
-        # Por ahora, usamos tus servicios existentes para llenar lo básico
-        # y listas vacías para lo que falte, así evitamos errores.
-        
-        try:
-            kpis = FinanzasMetrics.kpis_hoy()
-            resumen = FinanzasMetrics.resumen_periodo()
-        except:
-            kpis = {}
-            resumen = {}
-
-        data = {
-            # Datos básicos
-            "kpisHoy": kpis,
-            "resumen": resumen,
-            
-            # Gráficos (Inicialízalos vacíos o conecta tus funciones 'ventas_diarias', etc.)
-            "ventasDiarias": None, 
-            "productosTop": [],
-            "ventasPorCategoria": None,
-            "metricasAvanzadas": None,
-            "comparativaMom": [], # Esto arreglará el error de momChartData
-            "ventasDiaSemana": None,
-            "ventasPorHora": None,
-            "ventasPorCanal": [],
-            "clientesNuevosRecurrentes": None,
-            "clientesTop": [],
-            "proyeccion": None,
-            "alertas": [],
-            "utilidadBruta": None,
-            "gastosOperativos": None,
-            "utilidadNeta": None,
-            "roi": None,
-            "puntoEquilibrio": None,
-            "productosRentables": [],
-            "flujoCaja": None
-        }
-        
-        return Response(data, status=status.HTTP_200_OK)
-
 def parse_fecha(fecha_str):
     """Helper para parsear fechas desde query params"""
     try:
         return datetime.strptime(fecha_str, '%Y-%m-%d').date()
     except (ValueError, TypeError):
         return None
+
+
+class DashboardFinancieroView(APIView):
+    """
+    Vista consolidada que devuelve todos los datos del dashboard en una sola llamada.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Parsear filtros de fecha
+        fecha_inicio = parse_fecha(request.GET.get('fecha_inicio'))
+        fecha_fin = parse_fecha(request.GET.get('fecha_fin'))
+        
+        try:
+            # Obtener todas las métricas usando los servicios existentes
+            kpis = FinanzasMetrics.kpis_hoy()
+            resumen = FinanzasMetrics.resumen_periodo(fecha_inicio, fecha_fin)
+            ventas_diarias = FinanzasMetrics.ventas_diarias(fecha_inicio, fecha_fin)
+            productos_top = FinanzasMetrics.productos_top(fecha_inicio, fecha_fin, limite=10)
+            ventas_categoria = FinanzasMetrics.ventas_por_categoria(fecha_inicio, fecha_fin)
+            ventas_canal = FinanzasMetrics.ventas_por_canal(fecha_inicio, fecha_fin)
+            clientes_top = FinanzasMetrics.clientes_top(fecha_inicio, fecha_fin, limite=10)
+            utilidad_bruta = FinanzasMetrics.calcular_utilidad_bruta(fecha_inicio, fecha_fin)
+            productos_rentables = FinanzasMetrics.productos_rentables(fecha_inicio, fecha_fin, limite=10)
+            
+        except Exception as e:
+            # En caso de error, devolver estructura básica
+            kpis = {}
+            resumen = {}
+            ventas_diarias = None
+            productos_top = []
+            ventas_categoria = None
+            ventas_canal = []
+            clientes_top = []
+            utilidad_bruta = None
+            productos_rentables = []
+
+        data = {
+            # Datos básicos
+            "kpisHoy": kpis,
+            "resumen": resumen,
+            
+            # Gráficos principales
+            "ventasDiarias": ventas_diarias, 
+            "productosTop": productos_top,
+            "ventasPorCategoria": ventas_categoria,
+            "ventasPorCanal": ventas_canal,
+            "clientesTop": clientes_top,
+            
+            # Métricas financieras
+            "utilidadBruta": utilidad_bruta,
+            "productosRentables": productos_rentables,
+            
+            # Métricas avanzadas (opcional - se pueden agregar después)
+            "metricasAvanzadas": None,
+            "comparativaMom": [],
+            "ventasDiaSemana": None,
+            "ventasPorHora": None,
+            "clientesNuevosRecurrentes": None,
+            "proyeccion": None,
+            "alertas": [],
+            "gastosOperativos": None,
+            "utilidadNeta": None,
+            "roi": None,
+            "puntoEquilibrio": None,
+            "flujoCaja": None
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
