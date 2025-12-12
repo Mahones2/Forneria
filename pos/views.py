@@ -27,7 +27,7 @@ from .models import (
 # Módulos Locales: Serializers (Asegúrate de que VentaInputSerializer existe en serializers.py)
 from .serializers import (
     CategoriaSerializer, NutricionalSerializer, LoteSerializer, ProductoSerializer, 
-    AlertaSerializer, ClienteSerializer, DireccionSerializer, EmpleadoSerializer, 
+    AlertaSerializer, ClienteSerializer, DireccionSerializer, EmpleadoSerializer, EmpleadoCreateSerializer,
     TurnoSerializer, CarritoSerializer, ItemCarritoSerializer, VentaSerializer, 
     DetalleVentaSerializer, PagoSerializer, MovimientoInventarioSerializer,
     UbicacionSerializer, ProveedorSerializer, InsumoSerializer, OrdenCompraSerializer, 
@@ -90,12 +90,12 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [permissions.AllowAny] 
 
 class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 class NutricionalViewSet(viewsets.ModelViewSet):
     queryset = Nutricional.objects.all()
@@ -155,7 +155,7 @@ class ClienteViewSet(viewsets.ModelViewSet):
     # La lista por defecto (usada en get_queryset si no hay filtros)
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     
     # Permite buscar, actualizar y eliminar por el campo 'rut' (GET /clientes/{rut}/)
     lookup_field = 'rut' 
@@ -283,9 +283,58 @@ class ClienteViewSet(viewsets.ModelViewSet):
         return Response(response_data)
 
 class EmpleadoViewSet(viewsets.ModelViewSet):
-    queryset = Empleado.objects.all()
-    serializer_class = EmpleadoSerializer
+    queryset = Empleado.objects.all().order_by('usuario__first_name', 'usuario__last_name')
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return EmpleadoCreateSerializer
+        return EmpleadoSerializer
+
+    def get_permissions(self):
+        # Solo autenticado para GET; admin para mutaciones
+        from rest_framework.permissions import IsAuthenticated
+        from rest_framework.permissions import BasePermission
+
+        class IsAdminOnly(BasePermission):
+            def has_permission(self, request, view):
+                if request.method in ('GET', 'HEAD', 'OPTIONS'):
+                    return request.user and request.user.is_authenticated
+                # mutaciones: admin o superuser
+                try:
+                    cargo = getattr(request.user.empleado, 'cargo', None)
+                except Exception:
+                    cargo = None
+                return bool(request.user and request.user.is_authenticated and (request.user.is_superuser or cargo == 'Administrador'))
+
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAdminOnly()]
+
+    def perform_destroy(self, instance):
+        # Eliminar el User asociado cuando se elimina el Empleado
+        user = instance.usuario
+        instance.delete()
+        if user:
+            user.delete()
+
+    @action(detail=True, methods=['post'])
+    def reset_password(self, request, pk=None):
+        # Permiso: admin
+        try:
+            cargo = getattr(request.user.empleado, 'cargo', None)
+        except Exception:
+            cargo = None
+        if not (request.user.is_superuser or cargo == 'Administrador'):
+            return Response({'detail': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
+
+        empleado = self.get_object()
+        new_password = request.data.get('password')
+        if not new_password or len(new_password) < 6:
+            return Response({'password': ['La contraseña debe tener al menos 6 caracteres']}, status=status.HTTP_400_BAD_REQUEST)
+        empleado.usuario.set_password(new_password)
+        empleado.usuario.save(update_fields=['password'])
+        return Response({'detail': 'Contraseña actualizada'})
 
 class TurnoViewSet(viewsets.ModelViewSet):
     queryset = Turno.objects.all()

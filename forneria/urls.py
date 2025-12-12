@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from inventario import views as inventario_views
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -22,6 +23,8 @@ urlpatterns = [
     path('inventario/', include('inventario.urls')),
     path('pedidos/', include('pedido.urls')),
     path('pos/', include('pos.urls')),
+    # Redirección útil para desarrollo: /pos/ -> /pos/api/schema/swagger-ui/
+    path('pos/', RedirectView.as_view(url='/pos/api/schema/swagger-ui/', permanent=False)),
     path('', include('landing.urls')),
     path('reporte/', include('reportes.urls')),
     
