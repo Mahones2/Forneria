@@ -82,41 +82,117 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 class EmpleadoSerializer(serializers.ModelSerializer):
-    nombre_completo = serializers.CharField(source='__str__', read_only=True)
-    cargo = serializers.ChoiceField(
-        choices=Empleado.CARGO_CHOICES, 
-        required=True 
-    )
+    nombre_completo = serializers.SerializerMethodField()
+    username = serializers.CharField(source='usuario.username')
+    cargo = serializers.ChoiceField(choices=Empleado.CARGO_CHOICES, required=True)
+
     class Meta:
         model = Empleado
-        fields = '__all__'
+        fields = ['id', 'nombre_completo', 'username', 'cargo']
+
+    def get_nombre_completo(self, obj):
+        first = obj.usuario.first_name or ''
+        last = obj.usuario.last_name or ''
+        full = (first + ' ' + last).strip()
+        return full if full else obj.usuario.username
+
+    def validate_username(self, value):
+        # Unicidad y sin espacios
+        if ' ' in value:
+            raise serializers.ValidationError("El username no debe contener espacios")
+        from django.contrib.auth.models import User
+        qs = User.objects.filter(username=value)
+        # En edición, permitir el mismo usuario
+        instance = getattr(self, 'instance', None)
+        if instance:
+            qs = qs.exclude(pk=instance.usuario_id)
+        if qs.exists():
+            raise serializers.ValidationError("El username ya está en uso")
+        return value
+
+    def update(self, instance, validated_data):
+        # Permitir actualizar username y cargo
+        usuario_data = validated_data.get('usuario', {})
+        new_username = usuario_data.get('username')
+        if new_username:
+            instance.usuario.username = new_username
+            instance.usuario.save(update_fields=['username'])
+        cargo = validated_data.get('cargo')
+        if cargo:
+            instance.cargo = cargo
+            instance.save(update_fields=['cargo'])
+        return instance
 
 # empleados/serializers.py
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
-    usuario = UserCreateSerializer() 
+    # Contrato: nombre_completo, username, password, cargo
+    nombre_completo = serializers.CharField(write_only=True)
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
+    cargo = serializers.ChoiceField(choices=Empleado.CARGO_CHOICES)
+    
+    # Campos de lectura para respuesta
+    id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Empleado
-        # Necesitas todos los campos del Empleado, menos la relación 'usuario' 
-        # (que ahora es el serializador anidado)
-        fields = ['run', 'fono', 'direccion', 'cargo', 'usuario'] 
+        fields = ['id', 'nombre_completo', 'username', 'password', 'cargo']
+        read_only_fields = ['id']
+
+    def validate_username(self, value):
+        if ' ' in value:
+            raise serializers.ValidationError("El username no debe contener espacios")
+        from django.contrib.auth.models import User
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("El username ya está en uso")
+        return value
+
+    def validate_password(self, value):
+        if len(value) < 6:
+            raise serializers.ValidationError("La contraseña debe tener al menos 6 caracteres")
+        return value
 
     def create(self, validated_data):
-        # 1. Extrae los datos del User anidado
-        user_data = validated_data.pop('usuario')
+        from django.contrib.auth.models import User
+        import uuid
+        nombre = validated_data.pop('nombre_completo')
+        username = validated_data.pop('username')
+        password = validated_data.pop('password')
+        cargo = validated_data.pop('cargo')
 
-        # 2. Crea el objeto User
+        first, *rest = nombre.split(' ')
+        last = ' '.join(rest)
         user = User.objects.create_user(
-            username=user_data['username'],
-            email=user_data.get('email', ''), # Usar get() si el campo es opcional
-            first_name=user_data.get('first_name', ''),
-            last_name=user_data.get('last_name', ''),
-            password=user_data['password']
+            username=username,
+            first_name=first,
+            last_name=last,
+            password=password
         )
-
-        # 3. Crea el objeto Empleado, vinculándolo al User
-        empleado = Empleado.objects.create(usuario=user, **validated_data)
+        # Generar valores únicos para run y fono
+        unique_id = uuid.uuid4().hex[:8]
+        empleado = Empleado.objects.create(
+            usuario=user, 
+            cargo=cargo, 
+            run=f'-{unique_id}', 
+            fono=f'-{unique_id}', 
+            direccion='-'
+        )
         return empleado
+    
+    def to_representation(self, instance):
+        # Formato: {id, nombre_completo, username, cargo}
+        first = instance.usuario.first_name or ''
+        last = instance.usuario.last_name or ''
+        full = (first + ' ' + last).strip()
+        nombre = full if full else instance.usuario.username
+        
+        return {
+            'id': instance.id,
+            'nombre_completo': nombre,
+            'username': instance.usuario.username,
+            'cargo': instance.cargo
+        }
+
 
 class CustomJWTSerializer(JWTSerializer):
     def validate(self, attrs):

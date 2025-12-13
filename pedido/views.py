@@ -9,7 +9,7 @@ class PedidoViewSet(viewsets.ModelViewSet):
     serializer_class = PedidoSerializer
     
     # Usar el permiso de autenticación que estés usando en tu API
-    permission_classes = [permissions.IsAuthenticated] 
+    permission_classes = [permissions.AllowAny] 
 
     def get_queryset(self):
         # Opcional: Filtra solo los pedidos 'activos' (los que no son Completado/Cancelado)
