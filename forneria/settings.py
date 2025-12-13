@@ -9,6 +9,9 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # ==========================================
 # 2. SEGURIDAD Y DEPURACIÓN (SECURITY & DEBUG)
