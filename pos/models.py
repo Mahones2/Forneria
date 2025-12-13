@@ -6,7 +6,9 @@ from django.contrib.auth.models import User
 from decimal import Decimal, ROUND_HALF_UP # Necesario para cálculos de precisión
 from datetime import date # Necesario para cálculos de fecha en Lote
 from django.utils import timezone
-
+import os
+import unicodedata
+from django.utils.text import slugify
 # ==========================================
 # 1. MAESTROS
 # ==========================================
@@ -145,6 +147,28 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nombre
 
+
+def renombrar_imagen(instance, filename):
+    # Extraer extensión
+    extension = filename.split('.')[-1]
+
+    # Convertir nombre del producto a formato seguro
+    nombre_producto = slugify(instance.nombre)
+
+    # Contador basado en ID (si no existe aún, usar timestamp)
+    if instance.id:
+        contador = f"{instance.id:03d}"
+    else:
+        from time import time
+        contador = str(int(time()))
+
+    # Crear nombre final
+    nuevo_nombre = f"{nombre_producto}_{contador}.{extension}"
+
+    return os.path.join('productos_imagenes', nuevo_nombre)
+
+
+
 class Producto(models.Model):
     codigo_barra = models.CharField(max_length=50, unique=True, null=True, blank=True)
     nombre = models.CharField(max_length=100)
@@ -166,11 +190,12 @@ class Producto(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT)
     
     imagen_referencial = models.ImageField(
-        upload_to='productos_imagenes/',
+        upload_to=renombrar_imagen,
         null=True,
-        blank=True,
-        help_text="Imagen principal de referencia del producto."
+        blank=True
     )
+
+
 
     # OPTIMIZACIÓN DE RENDIMIENTO (Denormalización controlada por signals)
     stock_fisico = models.IntegerField(default=0, db_index=True) 

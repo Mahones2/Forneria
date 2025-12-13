@@ -5,6 +5,8 @@ from dj_rest_auth.views import LoginView, LogoutView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import EmpleadoDetailView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 
@@ -66,4 +68,4 @@ urlpatterns = [
 
     # Interfaz Redoc
     path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-]
+] 
