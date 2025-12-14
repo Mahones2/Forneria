@@ -345,6 +345,7 @@ class Venta(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     empleado = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True, blank=True)
+    fecha_entrega = models.DateField(null=True, blank=True)
     
     # Logística
     canal_venta = models.CharField(max_length=10, choices=CANAL_CHOICES, default='pos')
@@ -437,6 +438,27 @@ class Venta(models.Model):
             if restante > 0:
                 # Esto no debería pasar si la verificación inicial es correcta, pero es un seguro.
                 raise ValueError(f"Error interno: No se pudo retirar todo el stock para {producto.nombre}")
+
+    # =========================================================================
+    # METODOS HELPER (Estaban en tu primer código pero faltaban en el segundo)
+    # =========================================================================
+
+    def marcar_como_pagado(self):
+        """Mueve el pedido a cocina/preparación"""
+        self.estado = 'pagado'
+        self.save(update_fields=['estado'])
+
+    def marcar_en_camino(self):
+        """El pedido salió a reparto"""
+        if not self.direccion_despacho:
+            raise ValueError("No se puede despachar sin dirección")
+        self.estado = 'en_camino'
+        self.save(update_fields=['estado'])
+
+    def marcar_entregado(self):
+        """Pedido finalizado"""
+        self.estado = 'entregado'
+        self.save(update_fields=['estado'])
 
 
 class DetalleVenta(models.Model):
