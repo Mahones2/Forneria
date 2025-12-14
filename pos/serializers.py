@@ -1,14 +1,28 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from decimal import Decimal
-from django.contrib.auth.models import User 
+from django.contrib.auth.models import User
 from .models import (
-    Categoria, Producto, Nutricional, Lote, MovimientoInventario, 
-    Alerta, Cliente, Direccion, Empleado, Turno, Proveedor, Insumo, 
-    OrdenCompra, OrdenCompraItem, Carrito, ItemCarrito, Venta, 
+    Categoria, Producto, Nutricional, Lote, MovimientoInventario,
+    Alerta, Cliente, Direccion, Empleado, Turno, Proveedor, Insumo,
+    OrdenCompra, OrdenCompraItem, Carrito, ItemCarrito, Venta,
     DetalleVenta, Pago, Ubicacion
 )
 from dj_rest_auth.serializers import JWTSerializer
+from .validators import (
+    validate_rut_format,
+    validate_username_format,
+    validate_username_unique,
+    validate_positive_decimal,
+    validate_non_negative_decimal,
+    validate_stock_range,
+    validate_password_strength,
+    validate_email_unique,
+    validate_chilean_phone,
+    validate_codigo_barra,
+    validate_future_date,
+    validate_date_after
+)
 # ==========================================
 # 1. INPUT SERIALIZERS 
 # ==========================================
@@ -23,9 +37,24 @@ class PagoInputSerializer(serializers.Serializer):
     metodo = serializers.CharField(max_length=3)
     monto = serializers.DecimalField(max_digits=12, decimal_places=2)
     referencia = serializers.CharField(max_length=100, required=False, allow_null=True)
-    
-   
     monto_recibido = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+
+    def validate_monto(self, value):
+        """Validar que el monto sea positivo"""
+        return validate_positive_decimal(value, "Monto del pago")
+
+    def validate(self, data):
+        """Validar que monto_recibido sea >= monto para pagos en efectivo"""
+        if data.get('metodo') == 'EFE':
+            if not data.get('monto_recibido'):
+                raise serializers.ValidationError({
+                    'monto_recibido': 'El monto recibido es requerido para pagos en efectivo'
+                })
+            if data['monto_recibido'] < data['monto']:
+                raise serializers.ValidationError({
+                    'monto_recibido': 'El monto recibido debe ser mayor o igual al monto del pago'
+                })
+        return data
      
 class VentaInputSerializer(serializers.Serializer):
     """
@@ -36,6 +65,20 @@ class VentaInputSerializer(serializers.Serializer):
     cliente_id = serializers.IntegerField(required=False, allow_null=True)
     direccion_id = serializers.IntegerField(required=False, allow_null=True)
     canal = serializers.CharField(max_length=10, required=False)
+
+    def validate(self, data):
+        """Validar que la venta tenga al menos un producto"""
+        if not data.get('items') or len(data['items']) == 0:
+            raise serializers.ValidationError({
+                'items': 'La venta debe tener al menos un producto'
+            })
+
+        if not data.get('pagos') or len(data['pagos']) == 0:
+            raise serializers.ValidationError({
+                'pagos': 'La venta debe tener al menos un método de pago'
+            })
+
+        return data
 
 
 # ==========================================
@@ -61,13 +104,28 @@ class DireccionSerializer(serializers.ModelSerializer):
 
 class ClienteSerializer(serializers.ModelSerializer):
     # Campo de solo lectura calculado en la vista
-    total_compras = serializers.IntegerField(read_only=True) 
-    
+    total_compras = serializers.IntegerField(read_only=True)
+
     direcciones = DireccionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Cliente
         fields = '__all__'
+
+    def validate_rut(self, value):
+        """Validar formato RUT chileno"""
+        return validate_rut_format(value)
+
+    def validate_correo(self, value):
+        """Validar que el email sea único"""
+        if not value:
+            return value
+        instance = getattr(self, 'instance', None)
+        return validate_email_unique(value, Cliente, instance)
+
+    def validate_telefono(self, value):
+        """Validar formato de teléfono chileno"""
+        return validate_chilean_phone(value)
 
 # users/serializers.py
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -97,18 +155,10 @@ class EmpleadoSerializer(serializers.ModelSerializer):
         return full if full else obj.usuario.username
 
     def validate_username(self, value):
-        # Unicidad y sin espacios
-        if ' ' in value:
-            raise serializers.ValidationError("El username no debe contener espacios")
-        from django.contrib.auth.models import User
-        qs = User.objects.filter(username=value)
-        # En edición, permitir el mismo usuario
+        """Validar formato y unicidad del username"""
+        value = validate_username_format(value)
         instance = getattr(self, 'instance', None)
-        if instance:
-            qs = qs.exclude(pk=instance.usuario_id)
-        if qs.exists():
-            raise serializers.ValidationError("El username ya está en uso")
-        return value
+        return validate_username_unique(value, instance)
 
     def update(self, instance, validated_data):
         # Permitir actualizar username y cargo
@@ -140,17 +190,13 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate_username(self, value):
-        if ' ' in value:
-            raise serializers.ValidationError("El username no debe contener espacios")
-        from django.contrib.auth.models import User
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("El username ya está en uso")
-        return value
+        """Validar formato y unicidad del username"""
+        value = validate_username_format(value)
+        return validate_username_unique(value, instance=None)
 
     def validate_password(self, value):
-        if len(value) < 6:
-            raise serializers.ValidationError("La contraseña debe tener al menos 6 caracteres")
-        return value
+        """Validar fortaleza de la contraseña"""
+        return validate_password_strength(value)
 
     def create(self, validated_data):
         from django.contrib.auth.models import User
@@ -243,6 +289,28 @@ class ProductoSerializer(serializers.ModelSerializer):
     def get_precio_con_iva(self, obj):
         return obj.precio_con_iva()
 
+    def validate_precio_venta(self, value):
+        """Validar que el precio de venta sea positivo"""
+        if value is not None:
+            return validate_positive_decimal(value, "Precio de venta")
+        return value
+
+    def validate_costo_unitario(self, value):
+        """Validar que el costo unitario no sea negativo"""
+        if value is not None:
+            return validate_non_negative_decimal(value, "Costo unitario")
+        return value
+
+    def validate_stock_minimo_global(self, value):
+        """Validar que el stock mínimo no sea negativo"""
+        if value is not None:
+            return validate_non_negative_decimal(value, "Stock mínimo")
+        return value
+
+    def validate_codigo_barra(self, value):
+        """Validar formato del código de barras"""
+        return validate_codigo_barra(value)
+
 # ==========================================
 # 4. INVENTARIO Y ABASTECIMIENTO
 # ==========================================
@@ -283,6 +351,31 @@ class LoteSerializer(serializers.ModelSerializer):
         model = Lote
         fields = '__all__'
         read_only_fields = ['stock_actual']
+
+    def validate_precio_costo_unitario(self, value):
+        """Validar que el precio de costo sea positivo"""
+        if value is not None:
+            return validate_positive_decimal(value, "Precio de costo")
+        return value
+
+    def validate_stock_inicial(self, value):
+        """Validar rango de stock inicial"""
+        if value is not None:
+            return validate_stock_range(value)
+        return value
+
+    def validate(self, data):
+        """Validar que fecha_caducidad > fecha_elaboracion"""
+        fecha_elaboracion = data.get('fecha_elaboracion')
+        fecha_caducidad = data.get('fecha_caducidad')
+
+        if fecha_elaboracion and fecha_caducidad:
+            if fecha_caducidad <= fecha_elaboracion:
+                raise serializers.ValidationError({
+                    'fecha_caducidad': 'La fecha de caducidad debe ser posterior a la fecha de elaboración'
+                })
+
+        return data
 
 class MovimientoInventarioSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)

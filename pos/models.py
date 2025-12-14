@@ -3,6 +3,7 @@ from django.db.models import F, Sum
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from decimal import Decimal, ROUND_HALF_UP # Necesario para cálculos de precisión
 from datetime import date # Necesario para cálculos de fecha en Lote
 from django.utils import timezone
@@ -41,6 +42,22 @@ class Cliente(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        """Validaciones a nivel de modelo"""
+        import re
+
+        # Validar formato RUT si está presente (guión obligatorio)
+        if self.rut:
+            rut_pattern = r'^(\d{1,2}\.?\d{3}\.?\d{3})-[\dkK]$'
+            if not re.match(rut_pattern, self.rut):
+                raise ValidationError({
+                    'rut': 'Formato RUT inválido. Use XX.XXX.XXX-X o XXXXXXXX-X (el guión es obligatorio)'
+                })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Ejecutar validaciones antes de guardar
+        super().save(*args, **kwargs)
 
 class Direccion(models.Model):
     """Para delivery múltiple (Casa, Oficina)"""
@@ -209,10 +226,34 @@ class Producto(models.Model):
         precio = self.precio_venta if self.precio_venta is not None else Decimal('0')
         result = (precio * (Decimal(1) + iva)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         return result
-        
+
     def stock_total(self):
         """Suma el stock_actual de todos los lotes asociados (usado para verificación)."""
         return sum(lote.stock_actual or 0 for lote in self.lotes.all())
+
+    def clean(self):
+        """Validaciones a nivel de modelo"""
+        # Validar precio de venta (debe ser positivo, no negativo)
+        if self.precio_venta is not None and self.precio_venta < 0:
+            raise ValidationError({
+                'precio_venta': 'El precio de venta no puede ser negativo'
+            })
+
+        # Validar costo unitario (no negativo)
+        if self.costo_unitario is not None and self.costo_unitario < 0:
+            raise ValidationError({
+                'costo_unitario': 'El costo unitario no puede ser negativo'
+            })
+
+        # Validar stock mínimo (no negativo)
+        if self.stock_minimo_global is not None and self.stock_minimo_global < 0:
+            raise ValidationError({
+                'stock_minimo_global': 'El stock mínimo no puede ser negativo'
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Ejecutar validaciones antes de guardar
+        super().save(*args, **kwargs)
 
 class Nutricional(models.Model):
     calorias = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -280,7 +321,48 @@ class Lote(models.Model):
         self.save(update_fields=["stock_actual"])
         return self.stock_actual
 
+    def clean(self):
+        """Validaciones a nivel de modelo"""
+        # Validar que fecha_caducidad > fecha_elaboracion
+        if self.fecha_elaboracion and self.fecha_caducidad:
+            if self.fecha_caducidad <= self.fecha_elaboracion:
+                raise ValidationError({
+                    'fecha_caducidad': 'La fecha de caducidad debe ser posterior a la fecha de elaboración'
+                })
+
+        # Validar precio de costo positivo
+        if self.precio_costo_unitario is not None and self.precio_costo_unitario < 0:
+            raise ValidationError({
+                'precio_costo_unitario': 'El precio de costo no puede ser negativo'
+            })
+
+        # Validar stock inicial en rango
+        if self.stock_inicial is not None:
+            if self.stock_inicial < 0:
+                raise ValidationError({
+                    'stock_inicial': 'El stock inicial no puede ser negativo'
+                })
+            if self.stock_inicial > 9999:
+                raise ValidationError({
+                    'stock_inicial': 'Stock máximo permitido: 9999'
+                })
+
+        # Validar stock actual en rango (si existe)
+        if self.stock_actual is not None:
+            if self.stock_actual < 0:
+                raise ValidationError({
+                    'stock_actual': 'El stock actual no puede ser negativo'
+                })
+            if self.stock_actual > 9999:
+                raise ValidationError({
+                    'stock_actual': 'Stock máximo permitido: 9999'
+                })
+
     def save(self, *args, **kwargs):
+        # Solo validar si no es una actualización parcial de campos específicos
+        if 'update_fields' not in kwargs or kwargs['update_fields'] is None:
+            self.full_clean()  # Ejecutar validaciones antes de guardar
+
         if self._state.adding and self.stock_actual == 0:
             self.stock_actual = self.stock_inicial
         super().save(*args, **kwargs)
