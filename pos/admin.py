@@ -71,11 +71,11 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter = ('marca', 'categoria')
     list_editable = ('precio_venta', 'stock_minimo_global')
     fieldsets = (
-        (None, {'fields': ('nombre', 'descripcion', 'codigo_barra', 'categoria', 'imagen_referencial')}),
+        (None, {'fields': ('nombre', 'descripcion', 'codigo_barra', 'categoria', 'imagen_url')}),
         ('Información Comercial', {'fields': ('marca', 'precio_venta', 'tipo', 'presentacion')}),
         ('Inventario', {'fields': ('stock_fisico', 'stock_minimo_global',)}),
     )
-    readonly_fields = ('stock_fisico',) 
+    readonly_fields = ('stock_fisico', 'imagen_url') 
     inlines = [LoteInline]
     
     def precio_con_iva(self, obj):
