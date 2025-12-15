@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db import transaction
 
 # DRF Imports
-from rest_framework import viewsets, permissions, status, generics
+from rest_framework import viewsets, permissions, status, generics, parsers
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -79,6 +79,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
     permission_classes = [AllowAny]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
 class NutricionalViewSet(viewsets.ModelViewSet):
     queryset = Nutricional.objects.all()

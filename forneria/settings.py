@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    'cloudinary',
     
     'pos',
     'inventario',
@@ -238,3 +239,31 @@ REST_AUTH = {
 REST_AUTH_SERIALIZERS = {
     'JWT_SERIALIZER': 'pos.serializers.CustomJWTSerializer',
 }
+
+
+# ==========================================
+# 12. CLOUDINARY - ALMACENAMIENTO DE IMÁGENES
+# ==========================================
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# Configuración usando CLOUDINARY_URL
+# Formato: cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
+
+if CLOUDINARY_URL:
+    # Cloudinary parsea automáticamente la URL
+    cloudinary.config(
+        cloudinary_url=CLOUDINARY_URL,
+        secure=True
+    )
+else:
+    # Fallback para desarrollo local con variables separadas
+    cloudinary.config(
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'dpgc9uwwa'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY', ''),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET', ''),
+        secure=True
+    )
