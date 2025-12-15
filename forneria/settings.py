@@ -126,7 +126,6 @@ TEMPLATES = [
 # 6. BASE DE DATOS (DATABASE)
 # ==========================================
 
-# Usar PostgreSQL en producción (Railway), SQLite en desarrollo
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
@@ -142,6 +141,8 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+
 
 
 # ==========================================
@@ -190,7 +191,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
 

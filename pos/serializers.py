@@ -6,7 +6,7 @@ from .models import (
     Categoria, Producto, Nutricional, Lote, MovimientoInventario,
     Alerta, Cliente, Direccion, Empleado, Turno, Proveedor, Insumo,
     OrdenCompra, OrdenCompraItem, Carrito, ItemCarrito, Venta,
-    DetalleVenta, Pago, Ubicacion
+    DetalleVenta, Pago, Ubicacion, Etiqueta
 )
 from dj_rest_auth.serializers import JWTSerializer
 from .validators import (
@@ -276,10 +276,24 @@ class NutricionalSerializer(serializers.ModelSerializer):
         model = Nutricional
         fields = '__all__'
 
+class EtiquetaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Etiqueta
+        fields = ['id', 'nombre']
+
 class ProductoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.CharField(source='categoria.nombre', read_only=True)
     nutricional = NutricionalSerializer(read_only=True)
     precio_con_iva = serializers.SerializerMethodField()
+    etiquetas_detalle = EtiquetaSerializer(source='etiquetas', many=True, read_only=True)
+
+    # CAMPO 2: Para GUARDAR desde el formulario (Escritura)
+    # Aquí envías solo los IDs: [1, 5]
+    etiquetas = serializers.PrimaryKeyRelatedField(
+        queryset=Etiqueta.objects.all(), 
+        many=True, 
+        write_only=True 
+    )
 
     class Meta:
         model = Producto

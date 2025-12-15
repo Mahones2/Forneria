@@ -14,6 +14,7 @@ router = DefaultRouter()
 router.register(r'categorias', views.CategoriaViewSet)
 router.register(r'productos', views.ProductoViewSet)
 router.register(r'nutricional', views.NutricionalViewSet)
+router.register(r'etiquetas', views.EtiquetaViewSet)
 
 # 2. Inventario y Lotes
 router.register(r'ubicaciones', views.UbicacionViewSet)
@@ -40,12 +41,11 @@ router.register(r'ventas', views.VentaViewSet)
 router.register(r'detalles-venta', views.DetalleVentaViewSet)
 router.register(r'pagos', views.PagoViewSet)
 
+router.register(r'kiosco', views.KioscoViewSet, basename='kiosco')
 urlpatterns = [
     # CRUDs
     path('api/', include(router.urls)),
 
-    
-    
     # Autenticación
     path('api/auth/login/', LoginView.as_view(), name='rest_login'),
     path('api/auth/logout/', LogoutView.as_view(), name='rest_logout'),

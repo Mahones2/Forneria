@@ -1,11 +1,10 @@
-from django.db.models import F
+from django.db.models import F, Sum, Count, Prefetch
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator # No usada, pero mantenida si se necesita en otras vistas.
-from rest_framework_simplejwt.views import TokenObtainPairView
-from django.db.models import Prefetch
-from django.db.models import Count
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.utils import timezone
+from django.db import transaction
+
 # DRF Imports
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.views import APIView
@@ -13,25 +12,24 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-
-# Filtrado (Necesario si se usara DetalleVentaViewSet para filtrado por ID de Venta)
-from django_filters.rest_framework import DjangoFilterBackend 
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 # Módulos Locales: Modelos
 from .models import (
     Categoria, Nutricional, Lote, Producto, Alerta, Cliente, Direccion, Empleado, Turno,
     Carrito, ItemCarrito, Venta, DetalleVenta, Pago, MovimientoInventario,
-    Ubicacion, Proveedor, Insumo, OrdenCompra, OrdenCompraItem
+    Ubicacion, Proveedor, Insumo, OrdenCompra, OrdenCompraItem, Etiqueta
 )
 
-# Módulos Locales: Serializers (Asegúrate de que VentaInputSerializer existe en serializers.py)
+# Módulos Locales: Serializers
 from .serializers import (
     CategoriaSerializer, NutricionalSerializer, LoteSerializer, ProductoSerializer, 
-    AlertaSerializer, ClienteSerializer, DireccionSerializer, EmpleadoSerializer, EmpleadoCreateSerializer,
+    AlertaSerializer, ClienteSerializer, DireccionSerializer, 
+    EmpleadoSerializer, EmpleadoCreateSerializer,
     TurnoSerializer, CarritoSerializer, ItemCarritoSerializer, VentaSerializer, 
     DetalleVentaSerializer, PagoSerializer, MovimientoInventarioSerializer,
     UbicacionSerializer, ProveedorSerializer, InsumoSerializer, OrdenCompraSerializer, 
-    OrdenCompraItemSerializer, VentaInputSerializer 
+    OrdenCompraItemSerializer, VentaInputSerializer, EtiquetaSerializer
 )
 
 # Módulos Locales: Servicios
@@ -43,44 +41,29 @@ class EmpleadoDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # devuelve el empleado asociado al usuario logeado
+        # Devuelve el empleado asociado al usuario logeado
         return Empleado.objects.get(usuario=self.request.user)
 
 # ==========================================
-# PERMISOS
+# PERMISOS CUSTOM
 # ==========================================
-
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
     Permite acceso de lectura a todos, pero solo el Cliente asociado al usuario
-    puede editar/eliminar sus propios objetos (ej. Direccion).
+    puede editar/eliminar sus propios objetos.
     """
-    
     def has_object_permission(self, request, view, obj):
-        # Permite GET, HEAD, OPTIONS (métodos seguros) a cualquiera
         if request.method in permissions.SAFE_METHODS:
             return True
-        
-        # La escritura (PUT, PATCH, DELETE) requiere autenticación
         if not request.user.is_authenticated:
             return False
-            
-        # 1. Intentamos obtener el Cliente asociado al usuario logueado
         try:
-            # Asumimos la ruta de asociación: request.user -> Empleado -> Cliente
             cliente_asociado = request.user.empleado.cliente 
         except (AttributeError, ObjectDoesNotExist):
-            # Si el usuario no es un empleado o el empleado no tiene cliente asociado, denegar.
-            # (Esto maneja Superusuarios o Usuarios sin perfil completo)
             return False
-            
-        # 2. Comparamos el objeto con el Cliente asociado
-        # Asume que el objeto (obj) tiene un campo 'cliente' (ej. obj.cliente)
-        # Esto es válido para Direccion y probablemente Carrito/Venta (si no apuntan a User).
         if hasattr(obj, 'cliente') and obj.cliente is not None:
             return obj.cliente == cliente_asociado
-            
         return False
 
 # ==========================================
@@ -90,12 +73,14 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    permission_classes = [permissions.AllowAny] 
+    # CAMBIO IMPORTANTE: Permitir acceso público para que el menú cargue sin login
+    permission_classes = [AllowAny] 
 
 class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
-    permission_classes = [permissions.AllowAny]
+    # CAMBIO IMPORTANTE: Permitir acceso público para el catálogo
+    permission_classes = [AllowAny]
 
 class NutricionalViewSet(viewsets.ModelViewSet):
     queryset = Nutricional.objects.all()
@@ -108,20 +93,10 @@ class LoteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Permite filtrar lotes por producto usando parámetros URL.
-        Ejemplo: /pos/api/lotes/?producto=5
-        """
-        # 1. Obtenemos el queryset base (todos los lotes)
         queryset = Lote.objects.all()
-        
-        # 2. Buscamos si viene el parámetro 'producto' en la URL
         producto_id = self.request.query_params.get('producto')
-        
-        # 3. Si existe el ID, filtramos la lista
         if producto_id:
             queryset = queryset.filter(producto_id=producto_id)
-            
         return queryset
 
 class MovimientoInventarioViewSet(viewsets.ModelViewSet):
@@ -134,79 +109,35 @@ class AlertaViewSet(viewsets.ModelViewSet):
     serializer_class = AlertaSerializer
     permission_classes = [IsAuthenticated]
 
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from django.db.models import ObjectDoesNotExist
-# Asegúrate de que todos los modelos y serializers necesarios estén importados
-# from .models import Cliente, Venta, DetalleVenta 
-# from .serializers import ClienteSerializer, VentaSerializer # Usaremos solo ClienteSerializer y el formato manual
-from decimal import Decimal # Necesario si vas a usar Decimal en la lógica
-
-# Tu ClienteSerializer debería ser:
-# class ClienteSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Cliente
-#         fields = '__all__'
-
-
 class ClienteViewSet(viewsets.ModelViewSet):
-    # La lista por defecto (usada en get_queryset si no hay filtros)
-    queryset = Cliente.objects.all()
-    serializer_class = ClienteSerializer
-    permission_classes = [permissions.AllowAny]
+    # Usamos la lógica mejorada de tu compañera (ordenar por VIP/Compras)
+    queryset = Cliente.objects.annotate(
+        total_compras=Count('venta')
+    ).order_by('-total_compras')
     
-    # Permite buscar, actualizar y eliminar por el campo 'rut' (GET /clientes/{rut}/)
+    serializer_class = ClienteSerializer
+    # Permitimos acceso general para validar RUT en Kiosco, 
+    # aunque idealmente esto debería ser IsAuthenticatedOrReadOnly
+    permission_classes = [AllowAny]
     lookup_field = 'rut' 
 
-    # ----------------------------------------------------
-    # 1. OPTIMIZACIÓN Y FILTRADO PARA LISTADO (GET /clientes/)
-    # ----------------------------------------------------
-
     def get_queryset(self):
-        """
-        Retorna clientes ordenados por cantidad de compras (VIP primero).
-        """
-        # 1. ANNOTATE: Crea el campo virtual 'total_compras'
-        # 2. ORDER_BY: Ordena descendente (-total_compras)
-        # Nota: 'venta' es el nombre en minúscula del modelo relacionado o el related_name
-        queryset = Cliente.objects.annotate(
-            total_compras=Count('venta') 
-        ).order_by('-total_compras')
-        
-        # --- Lógica de Filtros (RUT y Nombre) ---
+        queryset = super().get_queryset()
         rut_param = self.request.query_params.get('rut', None)
         nombre_param = self.request.query_params.get('nombre', None)
 
         if rut_param:
             queryset = queryset.filter(rut__icontains=rut_param)
-        
         if nombre_param:
             queryset = queryset.filter(nombre__icontains=nombre_param)
-            
         return queryset
 
-    # ----------------------------------------------------
-    # 2. MÉTODO AUXILIAR PARA OBTENER VENTAS (Reutilizable y Limpio)
-    # ----------------------------------------------------
-
     def _get_ventas_data(self, cliente):
-        """
-        Método auxiliar para obtener y formatear los datos de las ventas 
-        de un cliente específico.
-        """
-        # Optimizado: Usa prefetch_related para cargar todos los detalles y productos 
-        # en pocas consultas.
         ventas = Venta.objects.filter(cliente=cliente).prefetch_related('detalles__producto').order_by('-fecha')
-        
         ventas_data = []
         for venta in ventas:
             productos = []
-            
             for detalle in venta.detalles.all():
-                # Asegura que la multiplicación y la conversión a string usen Decimal
-                # Se asume que DetalleVenta.cantidad y DetalleVenta.precio_unitario son DecimalFields
                 subtotal = detalle.cantidad * detalle.precio_unitario 
                 productos.append({
                     'id': detalle.producto.id,
@@ -215,7 +146,6 @@ class ClienteViewSet(viewsets.ModelViewSet):
                     'precio_unitario': str(detalle.precio_unitario),
                     'subtotal': str(subtotal),
                 })
-            
             ventas_data.append({
                 'id': venta.id,
                 'fecha': venta.fecha,
@@ -224,64 +154,37 @@ class ClienteViewSet(viewsets.ModelViewSet):
                 'folio_documento': venta.folio_documento,
                 'productos': productos
             })
-            
         return ventas_data
 
-
-    # ----------------------------------------------------
-    # 3. MÉTODO RETRIEVE (GET /clientes/{rut}/)
-    # ----------------------------------------------------
-
     def retrieve(self, request, *args, **kwargs):
-        """
-        Retorna el cliente encontrado por 'rut' con sus ventas asociadas 
-        y los productos de cada venta.
-        """
         try:
-            # get_object() ya usa lookup_field='rut' para buscar
             instance = self.get_object() 
         except ObjectDoesNotExist:
             return Response({"detail": "Cliente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Serializa los datos básicos del cliente
         serializer = self.get_serializer(instance)
         response_data = serializer.data
-        
-        # Agrega las ventas detalladas usando el método auxiliar
         response_data['ventas'] = self._get_ventas_data(instance)
-        
         return Response(response_data)
-
-    # ----------------------------------------------------
-    # 2. ACCIÓN ADICIONAL (Opcional, si necesitas la ruta específica)
-    # ----------------------------------------------------
 
     @action(detail=False, methods=['get'])
     def buscar_por_rut(self, request):
-        """
-        Busca un cliente por su RUT pasado como parámetro de consulta (query parameter).
-        Endpoint: GET /pos/api/clientes/buscar_por_rut/?rut=12345678-9
-        """
         rut_param = request.query_params.get('rut')
-        
         if not rut_param:
             return Response({"error": "Debe proporcionar el parámetro 'rut'."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Buscar el cliente directamente
             cliente = Cliente.objects.get(rut=rut_param)
         except Cliente.DoesNotExist:
             return Response({"error": f"Cliente con RUT {rut_param} no encontrado."}, status=status.HTTP_404_NOT_FOUND)
             
-        # Serializa los datos básicos del cliente
         serializer = self.get_serializer(cliente)
         response_data = serializer.data
-        
-        # Agrega las ventas detalladas
         response_data['ventas'] = self._get_ventas_data(cliente)
-        
         return Response(response_data)
 
+
+# Versión Segura y Correcta de EmpleadoViewSet
 class EmpleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all().order_by('usuario__first_name', 'usuario__last_name')
     permission_classes = [IsAuthenticated]
@@ -292,15 +195,12 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         return EmpleadoSerializer
 
     def get_permissions(self):
-        # Solo autenticado para GET; admin para mutaciones
-        from rest_framework.permissions import IsAuthenticated
         from rest_framework.permissions import BasePermission
 
         class IsAdminOnly(BasePermission):
             def has_permission(self, request, view):
                 if request.method in ('GET', 'HEAD', 'OPTIONS'):
                     return request.user and request.user.is_authenticated
-                # mutaciones: admin o superuser
                 try:
                     cargo = getattr(request.user.empleado, 'cargo', None)
                 except Exception:
@@ -312,7 +212,6 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         return [IsAdminOnly()]
 
     def perform_destroy(self, instance):
-        # Eliminar el User asociado cuando se elimina el Empleado
         user = instance.usuario
         instance.delete()
         if user:
@@ -320,7 +219,6 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def reset_password(self, request, pk=None):
-        # Permiso: admin
         try:
             cargo = getattr(request.user.empleado, 'cargo', None)
         except Exception:
@@ -335,6 +233,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         empleado.usuario.set_password(new_password)
         empleado.usuario.save(update_fields=['password'])
         return Response({'detail': 'Contraseña actualizada'})
+
 
 class TurnoViewSet(viewsets.ModelViewSet):
     queryset = Turno.objects.all()
@@ -367,114 +266,76 @@ class OrdenCompraItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 # ==========================================
-# 2. VISTAS CON LÓGICA DE NEGOCIO Y PERMISOS
+# 2. VISTAS CON LÓGICA DE NEGOCIO
 # ==========================================
 
 class DireccionViewSet(viewsets.ModelViewSet):
-    """
-    CRUD para las direcciones de un cliente, restringido al dueño.
-    """
     serializer_class = DireccionSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     
     def get_queryset(self):
-        """
-        Devuelve todas las direcciones para administradores/superusuarios, 
-        o solo las direcciones del cliente asociado al usuario logueado.
-        """
         user = self.request.user
-        
-        # 1. Permiso para Superusuarios o Administradores (deben tener un campo 'cargo' o 'is_superuser')
-        if user.is_superuser: # Si es superusuario, ve todas
+        if user.is_superuser:
             return Direccion.objects.all()
-        
-        # 2. Búsqueda de la asociación Cliente
         try:
-            # Asumimos que el User tiene un Empleado, y ese Empleado tiene un Cliente asociado
-            # (Esto sigue siendo una asunción muy fuerte para un negocio POS/E-commerce)
             cliente = user.empleado.cliente 
             return Direccion.objects.filter(cliente=cliente)
-            
         except (AttributeError, ObjectDoesNotExist):
-            # Si no hay asociación clara (ni superuser ni cliente asociado), denegar el listado
             raise PermissionDenied("Acceso denegado. No tienes permisos para ver direcciones.")
 
     def perform_create(self, serializer):
-        """Asigna automáticamente el cliente logueado a la nueva dirección."""
         user = self.request.user
-        
         try:
-            # Asignar la dirección al cliente asociado al empleado que la está creando
             cliente = user.empleado.cliente
             serializer.save(cliente=cliente)
         except (AttributeError, ObjectDoesNotExist):
-            # Si un Administrador está creando una dirección para un cliente X, 
-            # debería validar que el 'cliente_id' esté en la data, o denegar.
             if self.request.data.get('cliente'):
-                 # Si se pasa el ID del cliente en la data, permite que el Admin lo cree
                  serializer.save() 
             else:
                 raise PermissionDenied("Para crear una dirección sin perfil de Cliente, debe especificar 'cliente' en los datos.")
         
 class CarritoViewSet(viewsets.ModelViewSet):
-    """
-    Gestión de los items dentro del Carrito de Compra (E-commerce).
-    Este ViewSet gestiona los Ítems (ItemCarrito) y no el Carrito padre.
-    """
-    # IMPORTANTE: Definir queryset base para el Router y serializer para listar
     queryset = ItemCarrito.objects.all() 
     serializer_class = ItemCarritoSerializer
-    permission_classes = [permissions.AllowAny] 
+    permission_classes = [AllowAny] 
 
     def get_carrito(self):
-        """Obtiene o crea el carrito activo para el usuario/sesión."""
         user = self.request.user
         session_key = self.request.session.session_key
-        
         if not session_key:
             self.request.session.save()
             session_key = self.request.session.session_key
 
         carrito = None
-        
         if user.is_authenticated and hasattr(user, 'empleado'):
             try:
                 cliente = user.empleado.cliente
                 carrito, created = Carrito.objects.get_or_create(cliente=cliente)
-                
                 # Migración de carrito anónimo
                 ses_carrito = Carrito.objects.filter(session_key=session_key, cliente__isnull=True).first()
                 if ses_carrito and ses_carrito.id != carrito.id:
                     ItemCarrito.objects.filter(carrito=ses_carrito).update(carrito=carrito)
                     ses_carrito.delete()
-                    
             except Exception:
                 pass 
 
         if not carrito:
-            # Caso anónimo
             carrito, created = Carrito.objects.get_or_create(session_key=session_key, cliente__isnull=True)
-            
         return carrito
 
     def get_queryset(self):
-        """Filtra los items para mostrar solo el contenido del carrito activo."""
         carrito = self.get_carrito()
         return ItemCarrito.objects.filter(carrito=carrito).order_by('id')
 
     def perform_create(self, serializer):
-        """Añade o actualiza la cantidad del producto en el carrito."""
         carrito = self.get_carrito()
         producto_id = self.request.data.get('producto')
         cantidad = serializer.validated_data.get('cantidad', 1)
 
         item_existente = ItemCarrito.objects.filter(carrito=carrito, producto_id=producto_id).first()
-        
         if item_existente:
             item_existente.cantidad += cantidad
             item_existente.save()
-            # Devolvemos el item actualizado con un Response manual, sobrescribiendo el comportamiento estándar de DRF
-            # NOTA: Esto rompe el flujo estándar, pero es la implementación deseada.
             return Response(ItemCarritoSerializer(item_existente).data, status=status.HTTP_200_OK)
         else:
             serializer.save(carrito=carrito)
@@ -491,52 +352,28 @@ class CarritoViewSet(viewsets.ModelViewSet):
         serializer = CarritoSerializer(carrito)
         return Response(serializer.data)
         
-# --- VIEWSET FALTANTE 1: Para la ruta 'items-carrito' ---
 class ItemCarritoViewSet(viewsets.ModelViewSet):
-    """
-    CRUD directo sobre los ítems del carrito (generalmente usado por CarritoViewSet, 
-    pero se define aquí para la ruta del router).
-    """
     queryset = ItemCarrito.objects.all() 
     serializer_class = ItemCarritoSerializer
     permission_classes = [IsAuthenticated] 
-    
-    # Se recomienda fuertemente agregar lógica de filtrado aquí, similar a DireccionViewSet.
-    # def get_queryset(self):
-    #     # ... (asegurar que solo ve sus propios items de carrito) ...
-    #     pass
-
 
 class ProductosStockBajoList(generics.ListAPIView):
-    """
-    Retorna una lista de productos cuyo stock físico actual es <= stock mínimo.
-    """
     serializer_class = ProductoSerializer
     permission_classes = [IsAuthenticated] 
 
     def get_queryset(self):
-        """Filtra los productos donde el stock_fisico es <= stock_minimo_global."""
         return Producto.objects.filter(stock_fisico__lte=F('stock_minimo_global'))
 
 class VentaViewSet(viewsets.ModelViewSet):
-    """
-    CRUD para ver y gestionar ventas (solo para empleados). 
-    La creación se delega a VentaCreateAPIView o al método create personalizado.
-    """
     queryset = Venta.objects.all()
     serializer_class = VentaSerializer
     permission_classes = [IsAuthenticated]
     
-    # Sobreescribimos el create estándar para delegar al servicio
     def create(self, request, *args, **kwargs):
-        
-        # 1. Utiliza un Serializer de entrada (input) para validar los datos
         serializer = VentaInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
         data = serializer.validated_data
         
-        # 2. Prepara los datos para el servicio
         items_data = data.pop('items')
         pagos_info = data.pop('pagos')
         
@@ -544,7 +381,6 @@ class VentaViewSet(viewsets.ModelViewSet):
             cliente_obj = Cliente.objects.get(id=data.get('cliente_id')) if data.get('cliente_id') else None
             direccion_obj = Direccion.objects.get(id=data.get('direccion_id')) if data.get('direccion_id') else None
             
-            # 3. Llama al servicio de negocio FIFO
             venta_creada = procesar_venta(
                 cliente=cliente_obj,
                 direccion=direccion_obj,
@@ -554,46 +390,59 @@ class VentaViewSet(viewsets.ModelViewSet):
                 canal=data.get('canal', 'pos'),
             )
             
-            # 4. Devuelve la respuesta serializada
             respuesta_serializer = VentaSerializer(venta_creada)
             return Response(respuesta_serializer.data, status=status.HTTP_201_CREATED)
             
         except Cliente.DoesNotExist:
             return Response({'error': 'Cliente no encontrado.'}, status=status.HTTP_400_BAD_REQUEST)
-        except ValidationError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'Error interno al procesar la venta: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# --- VIEWSET FALTANTE 2: Para la ruta 'detalles-venta' ---
+    # --- MONITOR DE COCINA ---
+    @action(detail=False, methods=['get'])
+    def tablero_pedidos(self, request):
+        hoy = timezone.now().date()
+        pendientes_qs = Venta.objects.filter(estado='pagado').order_by('fecha', 'id')
+        terminados_qs = Venta.objects.filter(
+            estado__in=['entregado', 'en_camino'],
+            fecha__date=hoy
+        ).order_by('-id')
+
+        data = {
+            "pendientes": VentaSerializer(pendientes_qs, many=True).data,
+            "terminados": VentaSerializer(terminados_qs, many=True).data
+        }
+        return Response(data)
+
+    @action(detail=True, methods=['post'])
+    def marcar_entregado(self, request, pk=None):
+        venta = self.get_object()
+        try:
+            if hasattr(venta, 'marcar_entregado'):
+                venta.marcar_entregado()
+            else:
+                venta.estado = 'entregado'
+                venta.save()
+            return Response({'status': 'pedido listo', 'nuevo_estado': venta.estado})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class DetalleVentaViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Vista de solo lectura para los detalles de las ventas (histórico).
-    """
     queryset = DetalleVenta.objects.all() 
     serializer_class = DetalleVentaSerializer
     permission_classes = [IsAuthenticated]
 
 class PagoViewSet(viewsets.ModelViewSet):
-    """
-    CRUD de los pagos registrados.
-    """
     queryset = Pago.objects.all()
     serializer_class = PagoSerializer
     permission_classes = [IsAuthenticated]
     
 class VentaCreateAPIView(APIView):
-    """
-    Endpoint dedicado para procesar una venta completa (otra opción para POS/Web).
-    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # La lógica es idéntica al método create de VentaViewSet para mantener DRY (Don't Repeat Yourself), 
-        # pero mantenemos la clase APIView si se usa en una URL específica y fuera del Router.
         serializer = VentaInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
         data = serializer.validated_data
         
         items_data = data.pop('items')
@@ -620,36 +469,127 @@ class VentaCreateAPIView(APIView):
         except ValidationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'Error interno al procesar la venta: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({'error': 'Error interno: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ==========================================
-# 3. VISTAS TRADICIONALES (Django View)
+# 3. VISTAS PÚBLICAS Y KIOSCO
+# ==========================================
+
+class CatalogoUnificadoView(APIView):
+    permission_classes = [AllowAny] 
+
+    def get(self, request):
+        categorias = Categoria.objects.all()
+        productos = Producto.objects.all()
+        data = {
+            "categorias": CategoriaSerializer(categorias, many=True).data,
+            "productos": ProductoSerializer(productos, many=True).data
+        }
+        return Response(data)
+
+class KioscoViewSet(viewsets.ViewSet):
+    # Acceso público para que los clientes puedan pedir sin login
+    permission_classes = [AllowAny] 
+
+    @action(detail=False, methods=['get'])
+    def catalogo(self, request):
+        categorias = Categoria.objects.all()
+        productos = Producto.objects.filter(stock_fisico__gt=0).select_related('categoria')
+        return Response({
+            "categorias": CategoriaSerializer(categorias, many=True).data,
+            "productos": ProductoSerializer(productos, many=True).data
+        })
+
+    @action(detail=False, methods=['get'])
+    def validar_cliente(self, request):
+        rut = request.query_params.get('rut')
+        try:
+            cliente = Cliente.objects.get(rut=rut)
+            return Response({
+                "existe": True,
+                "id": cliente.id,
+                "nombre": cliente.nombre,
+                "rut": cliente.rut
+            })
+        except Cliente.DoesNotExist:
+            return Response({"existe": False}, status=200)
+
+    @action(detail=False, methods=['post'])
+    def registrar_cliente(self, request):
+        serializer = ClienteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+    @action(detail=False, methods=['post'])
+    def crear_pedido(self, request):
+        data = request.data
+        
+        items_data = data.get('items', [])
+        pagos_info = data.get('pagos', [])
+        cliente_id = data.get('cliente_id')
+        fecha_entrega = data.get('fecha_entrega') 
+
+        try:
+            # 1. Búsqueda SEGURA del cliente
+            cliente_obj = None
+            if cliente_id:
+                cliente_obj = Cliente.objects.get(id=cliente_id)
+
+            # 2. Crear la venta 
+            venta_creada = procesar_venta(
+                cliente=cliente_obj,
+                items_data=items_data,
+                metodo_pago_info=pagos_info,
+                usuario=None, # Kiosco es usuario anónimo
+                canal='web',
+                direccion=None
+            )
+
+            # 3. Guardar fecha de entrega si existe
+            if fecha_entrega:
+                venta_creada.fecha_entrega = fecha_entrega
+                venta_creada.save(update_fields=['fecha_entrega'])
+
+            return Response({
+                "id": venta_creada.id, 
+                "total": venta_creada.total,
+                "mensaje": "Pedido recibido"
+            }, status=201)
+
+        except Cliente.DoesNotExist:
+             return Response({'error': 'Cliente indicado no existe'}, status=400)
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=400)
+        except Exception as e:
+            # Error interno
+            print(f"Error Kiosco: {e}")
+            return Response({'error': 'Error interno procesando el pedido.'}, status=500)
+
+# ==========================================
+# 4. VISTAS TRADICIONALES (Django View)
 # ==========================================
 
 def finalizar_compra_view(request):
     """
-    Vista tradicional para E-commerce (NO DRF/API). Procesa la compra.
+    Vista tradicional para E-commerce (NO DRF/API).
     """
     if request.method == 'POST':
         try:
-            # 1. Obtener carrito por sesión
             carrito = Carrito.objects.get(session_key=request.session.session_key)
-            
             items = []
             total_carrito = 0
             for item in carrito.items.all():
                 items.append({'producto_id': item.producto.id, 'cantidad': item.cantidad})
-                total_carrito += item.subtotal() # Asume que ItemCarrito tiene subtotal()
+                total_carrito += item.subtotal()
             
-            # 2. Datos del formulario de pago
             pagos_info = {
                 'metodo': request.POST.get('metodo_pago'), 
-                'monto': total_carrito, # Monto total del carrito
+                'monto': total_carrito,
                 'referencia': request.POST.get('referencia_pago', 'N/A') 
             }
             
-            # 3. Llamar al servicio
             venta_creada = procesar_venta(
                 cliente=carrito.cliente,
                 items_data=items,
@@ -658,9 +598,7 @@ def finalizar_compra_view(request):
                 canal='web'
             )
             
-            # 4. Limpiar carrito
             carrito.delete()
-            
             return JsonResponse({'status': 'ok', 'venta_id': venta_creada.id})
 
         except Carrito.DoesNotExist:
@@ -668,5 +606,9 @@ def finalizar_compra_view(request):
         except ValidationError as e:
             return JsonResponse({'status': 'error', 'mensaje': str(e)}, status=400)
         except Exception as e:
-            print(f"Error crítico en la vista: {e}")
             return JsonResponse({'status': 'error', 'mensaje': 'Error interno de procesamiento.'}, status=500)
+
+class EtiquetaViewSet(viewsets.ModelViewSet):
+    queryset = Etiqueta.objects.all()
+    serializer_class = EtiquetaSerializer
+    permission_classes = [IsAuthenticated]
