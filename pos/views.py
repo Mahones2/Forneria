@@ -85,7 +85,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
 class NutricionalViewSet(viewsets.ModelViewSet):
     queryset = Nutricional.objects.all()
     serializer_class = NutricionalSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 class LoteViewSet(viewsets.ModelViewSet):
     queryset = Lote.objects.all()
