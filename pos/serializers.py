@@ -364,6 +364,13 @@ class ProductoSerializer(serializers.ModelSerializer):
         imagen = validated_data.pop('imagen', None)
         etiquetas = validated_data.pop('etiquetas', [])
         
+        # DEBUG: Ver qué llegó
+        print(f"🔍 DEBUG - imagen recibida: {imagen}")
+        print(f"🔍 DEBUG - tipo: {type(imagen)}")
+        if imagen:
+            print(f"🔍 DEBUG - nombre: {imagen.name}")
+            print(f"🔍 DEBUG - tamaño: {imagen.size} bytes")
+        
         # Crear el producto
         producto = super().create(validated_data)
         
@@ -374,6 +381,7 @@ class ProductoSerializer(serializers.ModelSerializer):
         # Subir imagen a Cloudinary si existe
         if imagen:
             try:
+                print(f"📤 DEBUG - Subiendo a Cloudinary...")
                 # Subir a Cloudinary con configuración de producción
                 upload_result = cloudinary.uploader.upload(
                     imagen,
@@ -394,16 +402,19 @@ class ProductoSerializer(serializers.ModelSerializer):
                     }
                 )
                 
+                print(f"✅ DEBUG - Upload exitoso: {upload_result.get('secure_url')}")
                 # Guardar la URL segura en el modelo
                 producto.imagen_url = upload_result['secure_url']
                 producto.save(update_fields=['imagen_url'])
                 
             except cloudinary.exceptions.Error as e:
+                print(f"❌ DEBUG - Error Cloudinary: {str(e)}")
                 # Error específico de Cloudinary
                 raise serializers.ValidationError({
                     'imagen': f'Error al subir imagen a Cloudinary: {str(e)}'
                 })
             except Exception as e:
+                print(f"❌ DEBUG - Error inesperado: {str(e)}")
                 # Cualquier otro error
                 raise serializers.ValidationError({
                     'imagen': f'Error inesperado al procesar imagen: {str(e)}'
