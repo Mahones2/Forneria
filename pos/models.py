@@ -193,7 +193,8 @@ class Producto(models.Model):
     presentacion = models.CharField(max_length=100, null=True, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT)
     
-    imagen_referencial = models.ImageField(upload_to=renombrar_imagen, null=True, blank=True)
+    # La imagen se sube a Cloudinary y se guarda solo la URL
+    imagen_url = models.URLField(max_length=500, null=True, blank=True, help_text="URL de la imagen en Cloudinary")
 
     stock_fisico = models.IntegerField(default=0, db_index=True) 
     stock_minimo_global = models.IntegerField(default=5)

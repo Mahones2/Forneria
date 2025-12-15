@@ -23,6 +23,7 @@ from .validators import (
     validate_future_date,
     validate_date_after
 )
+import cloudinary.uploader
 # ==========================================
 # 1. INPUT SERIALIZERS 
 # ==========================================
@@ -287,18 +288,24 @@ class ProductoSerializer(serializers.ModelSerializer):
     precio_con_iva = serializers.SerializerMethodField()
     etiquetas_detalle = EtiquetaSerializer(source='etiquetas', many=True, read_only=True)
 
-    # CAMPO 2: Para GUARDAR desde el formulario (Escritura)
-    # Aquí envías solo los IDs: [1, 5]
+    # Campo para escribir etiquetas (IDs)
     etiquetas = serializers.PrimaryKeyRelatedField(
         queryset=Etiqueta.objects.all(), 
         many=True, 
-        write_only=True 
+        write_only=True,
+        required=False
     )
+    
+    # Campo para recibir la imagen desde el frontend (multipart/form-data)
+    imagen = serializers.ImageField(write_only=True, required=False, allow_null=True)
+    
+    # Campo de lectura para la URL de Cloudinary
+    imagen_url = serializers.URLField(read_only=True)
 
     class Meta:
         model = Producto
         fields = '__all__'
-        read_only_fields = ['stock_fisico']
+        read_only_fields = ['stock_fisico', 'imagen_url']
 
     def get_precio_con_iva(self, obj):
         return obj.precio_con_iva()
@@ -324,6 +331,134 @@ class ProductoSerializer(serializers.ModelSerializer):
     def validate_codigo_barra(self, value):
         """Validar formato del código de barras"""
         return validate_codigo_barra(value)
+    
+    def validate_imagen(self, value):
+        """Validar tamaño y tipo de imagen"""
+        if value:
+            # Validar tamaño máximo (5MB)
+            max_size = 5 * 1024 * 1024  # 5MB en bytes
+            if value.size > max_size:
+                raise serializers.ValidationError(
+                    f"La imagen no debe superar 5MB. Tamaño actual: {value.size / (1024*1024):.2f}MB"
+                )
+            
+            # Validar tipo de archivo
+            if not value.content_type.startswith('image/'):
+                raise serializers.ValidationError(
+                    f"El archivo debe ser una imagen. Tipo recibido: {value.content_type}"
+                )
+            
+            # Validar extensiones permitidas
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+            file_extension = value.name.lower()[value.name.rfind('.'):]
+            if file_extension not in allowed_extensions:
+                raise serializers.ValidationError(
+                    f"Extensión no permitida. Use: {', '.join(allowed_extensions)}"
+                )
+        
+        return value
+    
+    def create(self, validated_data):
+        """Crear producto y subir imagen a Cloudinary si existe"""
+        # Extraer la imagen y etiquetas
+        imagen = validated_data.pop('imagen', None)
+        etiquetas = validated_data.pop('etiquetas', [])
+        
+        # Crear el producto
+        producto = super().create(validated_data)
+        
+        # Asignar etiquetas
+        if etiquetas:
+            producto.etiquetas.set(etiquetas)
+        
+        # Subir imagen a Cloudinary si existe
+        if imagen:
+            try:
+                # Subir a Cloudinary con configuración de producción
+                upload_result = cloudinary.uploader.upload(
+                    imagen,
+                    folder=f"productos",  # Folder dinámico en Cloudinary
+                    public_id=f"producto_{producto.id}_{producto.nombre[:30]}",
+                    overwrite=True,
+                    resource_type="image",
+                    # Optimizaciones automáticas
+                    transformation=[
+                        {'width': 800, 'height': 800, 'crop': 'limit'},
+                        {'quality': 'auto:good'},
+                        {'fetch_format': 'auto'}
+                    ],
+                    # Metadata
+                    context={
+                        'producto_id': str(producto.id),
+                        'producto_nombre': producto.nombre
+                    }
+                )
+                
+                # Guardar la URL segura en el modelo
+                producto.imagen_url = upload_result['secure_url']
+                producto.save(update_fields=['imagen_url'])
+                
+            except cloudinary.exceptions.Error as e:
+                # Error específico de Cloudinary
+                raise serializers.ValidationError({
+                    'imagen': f'Error al subir imagen a Cloudinary: {str(e)}'
+                })
+            except Exception as e:
+                # Cualquier otro error
+                raise serializers.ValidationError({
+                    'imagen': f'Error inesperado al procesar imagen: {str(e)}'
+                })
+        
+        return producto
+    
+    def update(self, instance, validated_data):
+        """Actualizar producto y cambiar imagen en Cloudinary si se proporciona nueva"""
+        # Extraer la imagen y etiquetas
+        imagen = validated_data.pop('imagen', None)
+        etiquetas = validated_data.pop('etiquetas', None)
+        
+        # Actualizar otros campos
+        instance = super().update(instance, validated_data)
+        
+        # Actualizar etiquetas si se proporcionan
+        if etiquetas is not None:
+            instance.etiquetas.set(etiquetas)
+        
+        # Si se proporciona nueva imagen, actualizar en Cloudinary
+        if imagen:
+            try:
+                # Subir nueva imagen (sobrescribe la anterior por el public_id)
+                upload_result = cloudinary.uploader.upload(
+                    imagen,
+                    folder=f"productos",
+                    public_id=f"producto_{instance.id}_{instance.nombre[:30]}",
+                    overwrite=True,
+                    resource_type="image",
+                    transformation=[
+                        {'width': 800, 'height': 800, 'crop': 'limit'},
+                        {'quality': 'auto:good'},
+                        {'fetch_format': 'auto'}
+                    ],
+                    context={
+                        'producto_id': str(instance.id),
+                        'producto_nombre': instance.nombre
+                    }
+                )
+                
+                # Actualizar la URL
+                instance.imagen_url = upload_result['secure_url']
+                instance.save(update_fields=['imagen_url'])
+                
+            except cloudinary.exceptions.Error as e:
+                raise serializers.ValidationError({
+                    'imagen': f'Error al actualizar imagen en Cloudinary: {str(e)}'
+                })
+            except Exception as e:
+                raise serializers.ValidationError({
+                    'imagen': f'Error inesperado al procesar imagen: {str(e)}'
+                })
+        
+        return instance
 
 # ==========================================
 # 4. INVENTARIO Y ABASTECIMIENTO
