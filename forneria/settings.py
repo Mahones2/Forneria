@@ -44,6 +44,7 @@ if render_host and render_host not in CSRF_TRUSTED_ORIGINS:
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite desarrollo
     "http://localhost:3000",  # CRA desarrollo
+    "https://forneria-frontend.vercel.app",  # Producción Vercel
 ]
 
 # Agregar dominio de Vercel si está configurado
@@ -54,6 +55,20 @@ if VERCEL_URL:
 # Permitir todos los orígenes en producción si CORS_ALLOW_ALL está activado
 if os.environ.get('CORS_ALLOW_ALL', 'False') == 'True':
     CORS_ALLOW_ALL_ORIGINS = True
+else:
+    # Configuración adicional de CORS
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+    ]
 
 
 # ==========================================
@@ -141,9 +156,6 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
-
-
 
 # ==========================================
 # 7. VALIDACIÓN DE CONTRASEÑAS

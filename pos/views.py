@@ -73,13 +73,11 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
-    # CAMBIO IMPORTANTE: Permitir acceso público para que el menú cargue sin login
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
 
 class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
-    # CAMBIO IMPORTANTE: Permitir acceso público para el catálogo
     permission_classes = [AllowAny]
 
 class NutricionalViewSet(viewsets.ModelViewSet):
@@ -110,14 +108,11 @@ class AlertaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 class ClienteViewSet(viewsets.ModelViewSet):
-    # Usamos la lógica mejorada de tu compañera (ordenar por VIP/Compras)
     queryset = Cliente.objects.annotate(
         total_compras=Count('venta')
     ).order_by('-total_compras')
     
     serializer_class = ClienteSerializer
-    # Permitimos acceso general para validar RUT en Kiosco, 
-    # aunque idealmente esto debería ser IsAuthenticatedOrReadOnly
     permission_classes = [AllowAny]
     lookup_field = 'rut' 
 
@@ -488,7 +483,6 @@ class CatalogoUnificadoView(APIView):
         return Response(data)
 
 class KioscoViewSet(viewsets.ViewSet):
-    # Acceso público para que los clientes puedan pedir sin login
     permission_classes = [AllowAny] 
 
     @action(detail=False, methods=['get'])

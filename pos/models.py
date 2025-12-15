@@ -355,6 +355,7 @@ class Venta(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     empleado = models.ForeignKey(Empleado, on_delete=models.SET_NULL, null=True, blank=True)
+    fecha_entrega = models.DateField(null=True, blank=True)
     
     # Logística
     canal_venta = models.CharField(max_length=10, choices=CANAL_CHOICES, default='pos')
@@ -424,7 +425,7 @@ class Venta(models.Model):
                 raise ValueError(f"Error interno: No se pudo retirar todo el stock para {producto.nombre}")
 
     # =========================================================================
-    # METODOS HELPER (ESTOS FALTABAN EN EL CODIGO DE TU COMPAÑERA Y SON VITALES)
+    # METODOS HELPER
     # =========================================================================
 
     def marcar_como_pagado(self):
