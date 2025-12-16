@@ -86,6 +86,9 @@ class NutricionalViewSet(viewsets.ModelViewSet):
     serializer_class = NutricionalSerializer
     permission_classes = [AllowAny]
 
+    filter_backends = [DjangoFilterBackend] 
+    filterset_fields = ['producto']
+    
 class LoteViewSet(viewsets.ModelViewSet):
     queryset = Lote.objects.all()
     serializer_class = LoteSerializer
