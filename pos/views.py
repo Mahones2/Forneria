@@ -34,7 +34,7 @@ from .serializers import (
 
 # Módulos Locales: Servicios
 from .services import procesar_venta
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 class EmpleadoDetailView(generics.RetrieveAPIView):
     serializer_class = EmpleadoSerializer
@@ -88,7 +88,7 @@ class NutricionalViewSet(viewsets.ModelViewSet):
 
     filter_backends = [DjangoFilterBackend] 
     filterset_fields = ['producto']
-    
+
 class LoteViewSet(viewsets.ModelViewSet):
     queryset = Lote.objects.all()
     serializer_class = LoteSerializer
